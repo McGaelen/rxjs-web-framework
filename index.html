@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<body>
+  <script type="module">
+    import { html } from './html.js'
+
+    const value = 'hello world'
+
+    const el = html`<div>${value}</div>`
+    document.body.appendChild(el)
+  </script>
+</body>
+</html>
