@@ -1,13 +1,41 @@
 <!doctype html>
 <html lang="en">
 <body>
+  <div>
+    <button id="my-button">counter</button>
+    <span id="my-span"></span>
+  </div>
+  <div>
+    <label for="my-input">text binding</label><input id="my-input">
+    <span id="my-span-2"></span>
+  </div>
   <script type="module">
     import { html } from './html.js'
+    import { state } from './functions.js'
 
-    const value = 'hello world'
+    // const value = 'hello world'
+    //
+    // const el = html`
+    //   <div class=${value}></div>
+    // `
+    // document.body.appendChild(el)
 
-    const el = html`<div>${value}</div>`
-    document.body.appendChild(el)
+    const mySpan = document.getElementById('my-span')
+    const mybutton = document.getElementById('my-button')
+    const myval = state(0)
+    myval.subscribe(val => mySpan.innerHTML = `${val}`)
+    mybutton.addEventListener('click', () => {
+      myval.$set(val => val + 1)
+    })
+
+
+    const myinput = document.getElementById('my-input')
+    const myspan2 = document.getElementById('my-span-2')
+    const myval2 = state('')
+    myinput.addEventListener('keyup', () => {
+      myval2.$set(myinput.value)
+    })
+    myval2.subscribe(val => myspan2.textContent = val)
   </script>
 </body>
 </html>

@@ -8,7 +8,7 @@ export function html(strings, ...expressions) {
   let uninterpolated = strings[0]
 
   for (const [idx, expr] of expressions.entries()) {
-    uninterpolated += `$${idx}${strings[idx + 1]}`
+    uninterpolated += `{{{${idx}}}}${strings[idx + 1]}`
   }
 
   // we essentially need to take the template and compile it on the fly
@@ -22,21 +22,67 @@ export function html(strings, ...expressions) {
   // and a reference to the element that would have setAttribute or appendChild called on it
   // would need to be saved.
 
-
   const parsed = new DOMParser().parseFromString(uninterpolated, 'text/html')
-
-  for (const [idx, expr] of expressions.entries()) {
-    let text
-    let attr = parsed.body.querySelector(`[=$${idx}]`)
-    if (!attr) {
-      // instead of doing this, we should probably just parse the whole string and create elements manually
-      text = parsed.evaluate('')
-    }
-  }
-
-  return parsed
+  console.log(parsed.body)
+  // loop through all the DOM in the parsed document and create the elements manually
+  // OR, loop through all the DOM in the parsed document, find where there are attrs or children that are expressions, then update them to the expression.
 }
 
-function createElement(tag, attrs, children) {
+/**
+ * @param string {string}
+ * @param expressions {Array<any>}
+ */
+// function parseHtml(string, expressions) {
+//   /** @type {Array<{tag: string, attrs: Record<string, any>, children: Array<any>}>} */
+//   const tags = [];
+//   let currentIndex = 0;
+//
+//   while (currentIndex < string.length) {
+//     const tagStart = string.indexOf('<', currentIndex) + 1;
+//     const attrStart = string.slice(tagStart).search(/\s/) + tagStart + 1;
+//     const childrenStart = string.indexOf('>', attrStart);
+//
+//   }
+//
+//   return tags;
+//   /* Output:
+//   [
+//       {
+//           tagName: 'div',
+//           attributes: { class: 'container' },
+//           content: 'Hello'
+//       },
+//       {
+//           tagName: 'span',
+//           attributes: { id: 'msg' },
+//           content: 'World'
+//       }
+//   ]
+//   */
+// }
 
-}
+/**
+ * @param tag {string}
+ * @param attrs {Record<string, any>}
+ * @param children {Array<any>}
+ *
+ * @returns HTMLElement
+ */
+// function createElement(tag, attrs, children) {
+//   const el = document.createElement(tag)
+//
+//   console.log(attrs)
+//   for (const [key, value] of Object.entries(attrs)) {
+//     el.setAttribute(key, value)
+//   }
+//
+//   for (const child of children) {
+//     if (typeof child === 'string') {
+//       el.appendChild(document.createTextNode(child))
+//     } else {
+//       el.appendChild(child)
+//     }
+//   }
+//
+//   return el
+// }
