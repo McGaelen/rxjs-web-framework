@@ -1,41 +1,49 @@
 <!doctype html>
 <html lang="en">
 <body>
-  <div>
-    <button id="my-button">counter</button>
-    <span id="my-span"></span>
-  </div>
-  <div>
-    <label for="my-input">text binding</label><input id="my-input">
-    <span id="my-span-2"></span>
-  </div>
+<!--  <div>-->
+<!--    <button id="my-button">counter</button>-->
+<!--    <span id="my-span"></span>-->
+<!--  </div>-->
+<!--  <div>-->
+<!--    <label for="my-input">text binding</label><input id="my-input">-->
+<!--    <span id="my-span-2"></span>-->
+<!--  </div>-->
   <script type="module">
-    import { html } from './html.js'
-    import { state } from './functions.js'
+    // import { html } from './html.js'
+    import { state, el } from './functions.js'
 
-    // const value = 'hello world'
-    //
-    // const el = html`
-    //   <div class=${value}></div>
-    // `
-    // document.body.appendChild(el)
+    const style = state('font-weight: bold;')
+    const count = state(0)
 
-    const mySpan = document.getElementById('my-span')
-    const mybutton = document.getElementById('my-button')
-    const myval = state(0)
-    myval.subscribe(val => mySpan.innerHTML = `${val}`)
-    mybutton.addEventListener('click', () => {
-      myval.$set(val => val + 1)
-    })
-
-
-    const myinput = document.getElementById('my-input')
-    const myspan2 = document.getElementById('my-span-2')
-    const myval2 = state('')
-    myinput.addEventListener('keyup', () => {
-      myval2.$set(myinput.value)
-    })
-    myval2.subscribe(val => myspan2.textContent = val)
+    const mydiv = el(
+      'div',
+      { id: 'hello-world-div', style },
+      [
+        'child text',
+        el('input', {
+          value: style,
+          keyup(e) {
+            style.$set(e.target.value)
+          }
+        }),
+        el('button', {
+          click(e) {
+            console.log(e)
+            alert('hello there!!!!')
+          }
+        }, [
+          'click me'
+        ]),
+        el(
+          'div',
+          {}, [
+            'counter value:',
+            count
+        ])
+      ]
+    )
+    document.body.appendChild(mydiv)
   </script>
 </body>
 </html>
