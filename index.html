@@ -1,14 +1,6 @@
 <!doctype html>
 <html lang="en">
 <body>
-<!--  <div>-->
-<!--    <button id="my-button">counter</button>-->
-<!--    <span id="my-span"></span>-->
-<!--  </div>-->
-<!--  <div>-->
-<!--    <label for="my-input">text binding</label><input id="my-input">-->
-<!--    <span id="my-span-2"></span>-->
-<!--  </div>-->
   <script type="module">
     // import { html } from './html.js'
     import { state, el } from './functions.js'
@@ -16,33 +8,21 @@
     const style = state('font-weight: bold;')
     const count = state(0)
 
-    const mydiv = el(
-      'div',
-      { id: 'hello-world-div', style },
-      [
-        'child text',
-        el('input', {
-          value: style,
-          keyup(e) {
-            style.$set(e.target.value)
-          }
-        }),
-        el('button', {
-          click(e) {
-            console.log(e)
-            alert('hello there!!!!')
-          }
-        }, [
-          'click me'
-        ]),
-        el(
-          'div',
-          {}, [
-            'counter value:',
+    const mydiv = el('div', { id: 'hello-world-div', style }, [
+      // TODO: The problem is that `count` subscribe methods aren't firing when an element
+      // TODO: is a child of an element which already reads `count` (regardless of order in the children array)
+      // TODO: Could probably be something to do with the reference getting dropped?
+      el('div', { click: () => count.$set(val => val + 1) }, [
+        'counter value:',
+        // count,
+        el('button', { click: () => count.$set(val => val + 1) }, [
+          el('div', {}, [
             count
-        ])
-      ]
-    )
+          ]),
+          count
+        ]),
+      ])
+    ])
     document.body.appendChild(mydiv)
   </script>
 </body>
