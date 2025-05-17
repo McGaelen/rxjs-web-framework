@@ -3,19 +3,23 @@
 <body>
   <script type="module">
     // import { html } from './html.js'
-    import { state, div, button } from './functions.js'
+    import { div, button } from './element.js'
+    import {iif} from "./control.js";
+    import {state} from "./state.js";
+    import {map} from "rxjs";
 
     // TODO:
     // conditional rendering
+    // derived state
     // components
-    //   - component({props}) that returns tagged template child fn?
-    //   - normal function that calls a `render` func (or tagged template) that sets up conditional rendering
+    //   - needs props to be reactive
+    //   - needs to accept children
 
     const count = state(0)
     const isVisible = state(true)
 
     function increment() {
-      count.$set(val => val + 1)
+      count.set$(val => val + 1)
     }
 
     function MyComponent() {
@@ -30,11 +34,30 @@
         ${
           div()`
             toggle visibility
-            ${button({ onclick: () => isVisible.$set(val => !val)})`
+            ${button({ onclick: () => isVisible.set$(val => !val)})`
               show/hide
             `}
 
-            // put some if statement here
+            ${
+              // in reality we probably want to be able to do something like `iif(count >= 1)`
+              // and have that be reactive
+              iif(isVisible, () =>
+                div()`
+                  im showing!
+                  ${
+                    iif(count.pipe(map(c => c > 10)), () =>
+                      div()`count is greater than 10`
+                    ).elseIf(count.pipe(map(c => c > 0)), () =>
+                      'count is less than 10'
+                    ).else(() =>
+                      'count is 0 or less'
+                    )
+                  }
+                `
+              ).else(() =>
+                div()`im hiding!`
+              )
+            }
           `
         }
       `

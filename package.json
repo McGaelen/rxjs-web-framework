@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "vite dev"
+    "dev": "bunx --bun vite dev"
   },
   "author": "",
   "license": "ISC",
@@ -12,5 +12,9 @@
     "rxjs": "^7.8.2",
     "vite": "^6.3.5"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@types/react": "^19.1.4",
+    "@types/react-dom": "^19.1.5"
+  }
 }

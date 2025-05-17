@@ -1,4 +1,5 @@
 import { BehaviorSubject } from "rxjs";
+import {IfControlFlowBuilder} from "./control.js";
 
 /**
  * @param [attributes] {AttributeRecord<HTMLDivElement>}
@@ -44,6 +45,7 @@ export function createElement(tag, attributes) {
   // TODO: i think all of `children` needs to be an observable to support conditionally rendering children...
   // TODO: use a tagged template for children that can create that observable
   return (strings, ...expressions) => {
+    /** @type {ChildList} */
     const childList = []
 
     // Collect all the strings and expressions into a chronological list so we can keep them in the order they were added
@@ -55,14 +57,24 @@ export function createElement(tag, attributes) {
     })
 
     childList.forEach((child, idx) => {
-      if (child.subscribe && typeof child.subscribe === 'function') {
+      if (child instanceof IfControlFlowBuilder) {
+        child.build().subscribe(val => {
+          appendOrReplaceChild(ref, idx, val)
+          // if (ref.childNodes[idx]) {
+          //   ref.replaceChild(val, ref.childNodes[idx])
+          // } else {
+          //   ref.appendChild(val)
+          // }
+        })
+      } else if (child.subscribe && typeof child.subscribe === 'function') {
         child.subscribe(val => {
-          const textNode = document.createTextNode(val?.toString() ?? val)
-          if (ref.childNodes[idx]) {
-            ref.replaceChild(textNode, ref.childNodes[idx])
-          } else {
-            ref.appendChild(textNode)
-          }
+          appendOrReplaceChild(ref, idx, val)
+          // const textNode = document.createTextNode(val?.toString() ?? val)
+          // if (ref.childNodes[idx]) {
+          //   ref.replaceChild(textNode, ref.childNodes[idx])
+          // } else {
+          //   ref.appendChild(textNode)
+          // }
         })
       } else if (typeof child === 'string') {
         ref.appendChild(document.createTextNode(child))
@@ -77,21 +89,14 @@ export function createElement(tag, attributes) {
   }
 }
 
-/**
- * @template T
- * @returns {State<T>}
- */
-export function state(initialVal) {
-  const obs = new BehaviorSubject(initialVal)
+function appendOrReplaceChild(ref, idx, val) {
+  const node = val instanceof HTMLElement
+      ? val
+      : document.createTextNode(val?.toString() ?? val)
 
-  obs.$set = (newVal) => {
-    if (typeof newVal === 'function') {
-      const returnedVal = newVal(obs.value)
-      obs.next(returnedVal)
-    } else {
-      obs.next(newVal)
-    }
+  if (ref.childNodes[idx]) {
+    ref.replaceChild(node, ref.childNodes[idx])
+  } else {
+    ref.appendChild(node)
   }
-
-  return obs
 }
