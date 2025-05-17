@@ -45,17 +45,15 @@
                 div()`
                   im showing!
                   ${
-                    iif(count.pipe(map(c => c > 10)), () =>
+                    iif(count.derive$(c => c > 10), () =>
                       div()`count is greater than 10`
-                    ).elseIf(count.pipe(map(c => c > 0)), () =>
+                    ).elseIf(count.derive$(c => c > 0), () =>
                       'count is less than 10'
                     ).else(() =>
                       'count is 0 or less'
                     )
                   }
                 `
-              ).else(() =>
-                div()`im hiding!`
               )
             }
           `

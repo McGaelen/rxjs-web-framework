@@ -1,8 +1,8 @@
 import {map, distinctUntilChanged, combineLatest} from "rxjs";
 
 /**
- * @param condition {any | import('rxjs').Observable<any>}
- * @param thenFn {() => HTMLElement}
+ * @param condition {IfCondition}
+ * @param thenFn {ThenFn}
  * @returns {IfControlFlowBuilder}
  */
 export function iif(condition, thenFn) {
@@ -10,18 +10,15 @@ export function iif(condition, thenFn) {
 }
 
 export class IfControlFlowBuilder {
-  /** @type boolean */
-  #elseUsed = false
-
-  /** @type {Array<{condition: any | import('rxjs').Observable<any>, thenFn: () => HTMLElement}>} */
+  /** @type {Array<{condition: IfCondition, thenFn: ThenFn}>} */
   #conditionList = []
 
-  /** @type {() => HTMLElement} */
+  /** @type {ThenFn} */
   #elseThenFn = null
 
   /**
-   * @param condition {any | import('rxjs').Observable<any>}
-   * @param thenFn {() => HTMLElement}
+   * @param condition {IfCondition}
+   * @param thenFn {ThenFn}
    */
   constructor(condition, thenFn) {
     this.#addCondition(condition, thenFn)
@@ -29,7 +26,7 @@ export class IfControlFlowBuilder {
 
   /**
    * @param condition {IfCondition}
-   * @param thenFn {() => HTMLElement}
+   * @param thenFn {ThenFn}
    * @returns {IfControlFlowBuilder}
    */
   elseIf(condition, thenFn) {
@@ -37,12 +34,11 @@ export class IfControlFlowBuilder {
   }
 
   /**
-   * @param thenFn {() => HTMLElement}
+   * @param thenFn {ThenFn}
    * @returns {IfControlFlowBuilder}
    */
   else(thenFn) {
-    if (!this.#elseUsed) {
-      this.#elseUsed = true
+    if (!this.#elseThenFn) {
       this.#elseThenFn = thenFn
     } else {
       throw new Error('else used more than once')
@@ -50,7 +46,7 @@ export class IfControlFlowBuilder {
     return this
   }
 
-  /** @returns {import('rxjs').Observable<string | HTMLElement>} */
+  /** @returns {import('rxjs').Observable<string | HTMLElement | null | undefined>} */
   build() {
     return combineLatest(
       this.#conditionList.map(({condition, thenFn}) => {
@@ -70,7 +66,7 @@ export class IfControlFlowBuilder {
 
   /**
    * @param condition {IfCondition}
-   * @param thenFn {() => HTMLElement}
+   * @param thenFn {ThenFn}
    * @returns {IfControlFlowBuilder}
    */
   #addCondition(condition, thenFn) {

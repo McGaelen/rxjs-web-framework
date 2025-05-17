@@ -84,6 +84,13 @@ export function createElement(tag, attributes) {
 }
 
 function appendOrReplaceChild(ref, idx, val) {
+  const isNil = val === null || val === undefined
+
+  if (isNil && ref.childNodes[idx]) {
+    ref.childNodes[idx]._destroy?.()
+    ref.removeChild(ref.childNodes[idx])
+  }
+
   const node = val instanceof HTMLElement
       ? val
       : document.createTextNode(val?.toString() ?? val)

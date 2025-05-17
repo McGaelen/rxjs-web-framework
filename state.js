@@ -1,4 +1,4 @@
-import {BehaviorSubject} from "rxjs";
+import {BehaviorSubject, map} from "rxjs";
 
 /**
  * @template T
@@ -15,6 +15,10 @@ export function state(initialVal) {
     } else {
       obs.next(newVal)
     }
+  }
+
+  obs.derive$ = (deriveFn) => {
+    return obs.pipe(map(deriveFn))
   }
 
   return obs

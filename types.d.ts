@@ -10,6 +10,7 @@ declare global {
   type State<T> = BehaviorSubject<T> & { set$: (newVal: T) => void }
 
   type IfCondition = any | Observable<any>
+  type ThenFn = () => (HTMLElement | string)
 
   type SubscriptionOrEventListener = SubscriptionLike | {ref: HTMLElement, eventProp: string}
 }
