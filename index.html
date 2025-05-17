@@ -16,9 +16,9 @@
         'counter value:',
         count,
         el('button', { click: () => count.$set(val => val + 1), 'data-count': count }, [
-          // el('div', {}, [
-          //   count
-          // ]),
+          el('div', {}, [
+            count
+          ]),
           count
         ])
       ])
