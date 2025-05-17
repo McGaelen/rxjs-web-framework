@@ -1,4 +1,4 @@
-import {Observable} from "rxjs";
+import {Observable, catchError, BehaviorSubject} from "rxjs";
 
 /**
  * TODO: this doesn't handle removing event listeners or unsubscribing from observables!
@@ -39,63 +39,56 @@ export function el(tag, attributes, children) {
 
   // TODO: i think all of `children` needs to be an observable to support conditionally rendering children...
   // TODO: use a tagged template for children that can create that observable
-  if (children) {
-    // if (tag === 'button') {
-    //   debugger
-    // }
-
-    for (const [idx, child] of children.entries()) {
-      if (child.subscribe && typeof child.subscribe === 'function') {
-        // TODO: for some reason the subscribe method doesn't get called when the element reading it is a child?
-        child.subscribe({
-          next: val => {
-            // if (tag === 'button') {
-            //   debugger
-            // }
-            const textNode = document.createTextNode(val?.toString() ?? val)
-            if (ref.childNodes[idx]) {
-              ref.replaceChild(textNode, ref.childNodes[idx])
-            } else {
-              ref.appendChild(textNode)
-            }
-          },
-          complete() {
-            console.log('complete')
-          }
-        })
-      } else if (typeof child === 'string') {
-        ref.appendChild(document.createTextNode(child))
-      } else {
-        ref.appendChild(child)
-      }
-    }
-    // children.forEach((child, idx) => {
-    //
-    // })
+  if (!children) return ref
+  if (tag === 'button') {
+    debugger
   }
+
+  for (const [idx, child] of children.entries()) {
+    if (child.subscribe && typeof child.subscribe === 'function') {
+      // TODO: for some reason the subscribe method doesn't get called when the element reading it is a child?
+      child.subscribe({
+        next: val => {
+          if (tag === 'button') {
+            debugger
+          }
+          const textNode = document.createTextNode(val?.toString() ?? val)
+          if (ref.childNodes[idx]) {
+            ref.replaceChild(textNode, ref.childNodes[idx])
+          } else {
+            ref.appendChild(textNode)
+          }
+        },
+        complete() {
+          console.log('complete')
+        }
+      })
+    } else if (typeof child === 'string') {
+      ref.appendChild(document.createTextNode(child))
+    } else {
+      ref.appendChild(child)
+    }
+  }
+  // children.forEach((child, idx) => {
+  //
+  // })
+
 
   return ref
 }
 
 /**
- * @returns {Observable<any> & { $set: (newVal: any) => void }}
+ * @returns {BehaviorSubject<any> & { $set: (newVal: any) => void }}
  */
 export function state(initialVal) {
-  let subscriber
-  const obs = new Observable(psubscriber => {
-    subscriber = psubscriber
-    subscriber.next(initialVal)
-  })
+  const obs = new BehaviorSubject(initialVal)
 
-  let lastVal = initialVal
   obs.$set = (newVal) => {
     if (typeof newVal === 'function') {
-      const returnedVal = newVal(lastVal)
-      subscriber.next(returnedVal)
-      lastVal = returnedVal
+      const returnedVal = newVal(obs.value)
+      obs.next(returnedVal)
     } else {
-      subscriber.next(newVal)
-      lastVal = newVal
+      obs.next(newVal)
     }
   }
 

@@ -12,15 +12,15 @@
       // TODO: The problem is that `count` subscribe methods aren't firing when an element
       // TODO: is a child of an element which already reads `count` (regardless of order in the children array)
       // TODO: Could probably be something to do with the reference getting dropped?
-      el('div', { click: () => count.$set(val => val + 1) }, [
+      el('div', { click: () => count.$set(val => val + 1), 'data-count': count }, [
         'counter value:',
-        // count,
-        el('button', { click: () => count.$set(val => val + 1) }, [
-          el('div', {}, [
-            count
-          ]),
+        count,
+        el('button', { click: () => count.$set(val => val + 1), 'data-count': count }, [
+          // el('div', {}, [
+          //   count
+          // ]),
           count
-        ]),
+        ])
       ])
     ])
     document.body.appendChild(mydiv)
