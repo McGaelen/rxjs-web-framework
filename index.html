@@ -3,24 +3,35 @@
 <body>
   <script type="module">
     // import { html } from './html.js'
-    import { state, el } from './functions.js'
+    import { state, div, button } from './functions.js'
 
-    const style = state('font-weight: bold;')
+    // TODO:
+    // conditional rendering
+    // components
+    //   - component({props}) that returns tagged template child fn?
+    //   - normal function that calls a `render` func (or tagged template) that sets up conditional rendering
+
     const count = state(0)
 
-    const mydiv = el('div', { id: 'hello-world-div', style }, [
-      el('div', { click: () => count.$set(val => val + 1), 'data-count': count }, [
-        'counter value:',
-        count,
-        el('button', { click: () => count.$set(val => val + 1), 'data-count': count }, [
-          el('div', {}, [
-            count
-          ]),
-          count
-        ])
-      ])
-    ])
-    document.body.appendChild(mydiv)
+    function increment() {
+      count.$set(val => val + 1)
+    }
+
+    function MyComponent() {
+      return div({
+        onclick: increment,
+        style: 'font-weight: bold;'
+      })`
+        counter value: ${count}
+        ${
+          button({ onclick: increment })`${
+            div()`${count}`
+          }`
+        }
+      `
+    }
+
+    document.body.appendChild(MyComponent())
   </script>
 </body>
 </html>
