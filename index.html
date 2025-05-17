@@ -12,21 +12,30 @@
     //   - normal function that calls a `render` func (or tagged template) that sets up conditional rendering
 
     const count = state(0)
+    const isVisible = state(true)
 
     function increment() {
       count.$set(val => val + 1)
     }
 
     function MyComponent() {
-      return div({
-        onclick: increment,
-        style: 'font-weight: bold;'
-      })`
-        counter value: ${count}
+      return div({ style: 'font-weight: bold;', })`
         ${
-          button({ onclick: increment })`${
-            div()`${count}`
-          }`
+          div({ onclick: increment })`
+            counter value: ${count}
+            ${button({ onclick: increment })`${count}`}
+          `
+        }
+
+        ${
+          div()`
+            toggle visibility
+            ${button({ onclick: () => isVisible.$set(val => !val)})`
+              show/hide
+            `}
+
+            // put some if statement here
+          `
         }
       `
     }
