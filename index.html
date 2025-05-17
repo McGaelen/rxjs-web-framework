@@ -9,9 +9,6 @@
     const count = state(0)
 
     const mydiv = el('div', { id: 'hello-world-div', style }, [
-      // TODO: The problem is that `count` subscribe methods aren't firing when an element
-      // TODO: is a child of an element which already reads `count` (regardless of order in the children array)
-      // TODO: Could probably be something to do with the reference getting dropped?
       el('div', { click: () => count.$set(val => val + 1), 'data-count': count }, [
         'counter value:',
         count,
