@@ -1,5 +1,5 @@
-import { BehaviorSubject } from "rxjs";
 import {IfControlFlowBuilder} from "./control.js";
+import {registry} from "./utils.js";
 
 /**
  * @param [attributes] {AttributeRecord<HTMLDivElement>}
@@ -25,6 +25,8 @@ export function button(attributes) {
  * @returns {ChildTaggedTemplateFn<Element>}
  */
 export function createElement(tag, attributes) {
+  const {register, destroy} = registry()
+
   const ref = document.createElement(tag)
 
   if (attributes) {
@@ -32,9 +34,12 @@ export function createElement(tag, attributes) {
       if (typeof value === 'function') {
         // if its a function, try to add it as an event listener
         ref[key] = value
+        register({ref, eventProp: key})
       } else if (value.subscribe && typeof value.subscribe === 'function') {
         // if it has a subscribe function, it's probably an Observable
-        value.subscribe(val => ref.setAttribute(key, val))
+        register(
+          value.subscribe(val => ref.setAttribute(key, val))
+        )
       } else {
         // otherwise, it is probably just a static value, so set it normally
         ref.setAttribute(key, value)
@@ -56,13 +61,13 @@ export function createElement(tag, attributes) {
 
     childList.forEach((child, idx) => {
       if (child instanceof IfControlFlowBuilder) {
-        child.build().subscribe(val => {
-          appendOrReplaceChild(ref, idx, val)
-        })
+        register(
+          child.build().subscribe(val => appendOrReplaceChild(ref, idx, val))
+        )
       } else if (child.subscribe && typeof child.subscribe === 'function') {
-        child.subscribe(val => {
-          appendOrReplaceChild(ref, idx, val)
-        })
+        register(
+          child.subscribe(val => appendOrReplaceChild(ref, idx, val))
+        )
       } else if (typeof child === 'string') {
         ref.appendChild(document.createTextNode(child))
       } else if (typeof child === 'function') {
@@ -71,6 +76,8 @@ export function createElement(tag, attributes) {
         ref.appendChild(child)
       }
     })
+
+    ref._destroy = destroy
 
     return ref
   }
@@ -82,6 +89,8 @@ function appendOrReplaceChild(ref, idx, val) {
       : document.createTextNode(val?.toString() ?? val)
 
   if (ref.childNodes[idx]) {
+    // Call the existing child node's teardown logic before we replace it with a new element
+    ref.childNodes[idx]._destroy?.()
     ref.replaceChild(node, ref.childNodes[idx])
   } else {
     ref.appendChild(node)

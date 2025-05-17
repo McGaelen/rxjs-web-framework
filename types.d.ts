@@ -1,4 +1,4 @@
-import {BehaviorSubject, Observable} from "rxjs";
+import {BehaviorSubject, Observable, SubscriptionLike} from "rxjs";
 import {IfControlFlowBuilder} from './control'
 
 declare global {
@@ -10,4 +10,6 @@ declare global {
   type State<T> = BehaviorSubject<T> & { set$: (newVal: T) => void }
 
   type IfCondition = any | Observable<any>
+
+  type SubscriptionOrEventListener = SubscriptionLike | {ref: HTMLElement, eventProp: string}
 }
