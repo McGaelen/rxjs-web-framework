@@ -42,8 +42,6 @@ export function createElement(tag, attributes) {
     })
   }
 
-  // TODO: i think all of `children` needs to be an observable to support conditionally rendering children...
-  // TODO: use a tagged template for children that can create that observable
   return (strings, ...expressions) => {
     /** @type {ChildList} */
     const childList = []
@@ -60,21 +58,10 @@ export function createElement(tag, attributes) {
       if (child instanceof IfControlFlowBuilder) {
         child.build().subscribe(val => {
           appendOrReplaceChild(ref, idx, val)
-          // if (ref.childNodes[idx]) {
-          //   ref.replaceChild(val, ref.childNodes[idx])
-          // } else {
-          //   ref.appendChild(val)
-          // }
         })
       } else if (child.subscribe && typeof child.subscribe === 'function') {
         child.subscribe(val => {
           appendOrReplaceChild(ref, idx, val)
-          // const textNode = document.createTextNode(val?.toString() ?? val)
-          // if (ref.childNodes[idx]) {
-          //   ref.replaceChild(textNode, ref.childNodes[idx])
-          // } else {
-          //   ref.appendChild(textNode)
-          // }
         })
       } else if (typeof child === 'string') {
         ref.appendChild(document.createTextNode(child))

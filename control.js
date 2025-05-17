@@ -1,4 +1,4 @@
-import {map, forkJoin, combineLatest} from "rxjs";
+import {map, distinctUntilChanged, combineLatest} from "rxjs";
 
 /**
  * @param condition {any | import('rxjs').Observable<any>}
@@ -59,10 +59,12 @@ export class IfControlFlowBuilder {
     ).pipe(
       map(conditions => {
         for (const {condition, thenFn} of conditions) {
-          if (condition) return thenFn()
+          if (condition) return thenFn
         }
-        return this.#elseThenFn?.()
-      })
+        return this.#elseThenFn
+      }),
+      distinctUntilChanged(),
+      map(thenFn => thenFn?.())
     )
   }
 
