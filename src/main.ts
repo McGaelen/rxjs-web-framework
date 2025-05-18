@@ -1,11 +1,16 @@
-import {div, button, input, h1, $, derive$, State, state$, ChildList, Children} from './lib'
+import {div, button, input, h1, $, derive$, State, state$ } from './lib'
 
-// TODO:
-// component children (maybe with slots too?) should probably look the same as normal elements with a ChildTaggedTemplateFn
-// async/promises/using fetch
-// make the syntax not look like shit
-// make a test page that does something more advanced than a counter
-// support attributes that use back ticks with an observable somewhere within it
+
+/**
+ * TODO:
+ * component children (maybe with slots too?) should probably look the same as normal elements with a ChildTaggedTemplateFn
+ * async/promises/using fetch
+ * make the syntax not look like shit
+ *    - allow omitting the attributes object
+ * make a test page that does something more advanced than a counter
+ * support attributes that use back ticks with an observable somewhere within it
+ *    - can we reuse $`` for this?
+ */
 
 const count$ = state$(0)
 const isVisible$ = state$(false)
