@@ -5,8 +5,8 @@ import {
   ChildExpression,
   ChildList,
   Children,
-  HTMLElementWithTeardown
-} from "./index";
+  HTMLElementWithTeardown,
+} from "./index"
 
 export function div(
   attributes?: AttributeRecord,
@@ -77,7 +77,10 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   return ref
 }
 
-export function $(strings: TemplateStringsArray, ...expressions: ChildList): ChildList {
+export function $(
+  strings: TemplateStringsArray,
+  ...expressions: ChildList
+): ChildList {
   const childList: ChildList = []
 
   // Collect all the strings and expressions into a chronological list so we can keep them in the order they were added
