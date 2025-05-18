@@ -3,13 +3,15 @@ import {div, button, input, h1, $, derive$, State, state$ } from './lib'
 
 /**
  * TODO:
- * component children (maybe with slots too?) should probably look the same as normal elements with a ChildTaggedTemplateFn
+ * component children (maybe with slots too?) should probably look the same as normal elements
+ *    - maybe just accept an HTMLElement instead of a ChildList/ChildExpression?
  * async/promises/using fetch
  * make the syntax not look like shit
  *    - allow omitting the attributes object
  * make a test page that does something more advanced than a counter
  * support attributes that use back ticks with an observable somewhere within it
  *    - can we reuse $`` for this?
+ * for loops
  */
 
 const count$ = state$(0)
