@@ -1,5 +1,4 @@
-import { div, button, input, h1 } from './lib'
-import { derive$, State, state$ } from './lib'
+import { div, button, input, h1, $, derive$, State, state$ } from './lib'
 
 // TODO:
 // component children (maybe with slots too?) should probably look the same as normal elements with a ChildTaggedTemplateFn
@@ -17,16 +16,16 @@ function increment() {
 }
 
 function MyComponent() {
-  return div({ style: 'font-weight: bold; font-family: sans-serif;' })`
-    ${div({ onclick: increment })`
-      ${h1()`Counter`}
+  return div({ style: 'font-weight: bold; font-family: sans-serif;' }, $`
+    ${div({ onclick: increment }, $`
+      ${h1({}, $`Counter`)}
       counter value: ${count}
-      ${button({ onclick: increment })`${count}`}
-    `}
+      ${button({onclick: increment}, $`${count}`)}
+    `)}
 
-    ${div()`
-      ${h1()`toggle visibility`}
-      ${button({ onclick: () => isVisible.set$(val => !val)})`show/hide`}
+    ${div({}, $`
+      ${h1({}, $`toggle visibility`)}
+      ${button({ onclick: () => isVisible.set$(val => !val)}, $`show/hide`)}
       ${
         derive$((isVisible, count) => {
           if (!isVisible) {
@@ -40,25 +39,25 @@ function MyComponent() {
           }
         }, [isVisible, count])
       }
-    `}
+    `)}
 
-    ${div()`
-      ${h1()`Subcomponent with reactive props:`}
-      ${div()`the button is in the MyButton component`}
+    ${div({}, $`
+      ${h1({}, $`Subcomponent with reactive props:`)}
+      ${div({}, $`the button is in the MyButton component`)}
       ${input({
         onkeyup: (e: KeyboardEvent) => buttonText.set$((e.currentTarget as HTMLInputElement).value),
         value: buttonText
       })}
       ${MyButton({ buttonText })}
-    `}
-  `
+    `)}
+  `)
 }
 
 function MyButton({buttonText}: {buttonText: State<string>}) {
   function onclick() {
     alert(buttonText.value)
   }
-  return button({ onclick })`${buttonText}`
+  return button({ onclick }, $`${buttonText}`)
 }
 
 document.body.appendChild(MyComponent())

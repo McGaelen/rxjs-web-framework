@@ -1,40 +1,40 @@
 import { registry } from "./registry"
 import { isObservable } from "rxjs"
-import {AttributeRecord, ChildExpression, ChildList, ChildTaggedTemplateFn, ReactiveHTMLElement} from "./index";
+import {AttributeRecord, ChildExpression, ChildList, ChildTaggedTemplateFn, HTMLElementWithTeardown} from "./index";
 
 export function div(
   attributes?: AttributeRecord,
-  // ...children: ChildList
-): ChildTaggedTemplateFn<HTMLDivElement> {
-  return createElement("div", attributes)
+  children?: ChildList
+): HTMLDivElement {
+  return createElement("div", attributes, children)
 }
 
 export function button(
   attributes?: AttributeRecord,
-  // ...children: ChildList
-): ChildTaggedTemplateFn<HTMLButtonElement> {
-  return createElement("button", attributes)
+  children?: ChildList
+): HTMLButtonElement {
+  return createElement("button", attributes, children)
 }
 
 export function input(attributes?: AttributeRecord): HTMLInputElement {
-  return createElement("input", attributes)()
+  return createElement("input", attributes)
 }
 
 export function h1(
   attributes?: AttributeRecord,
-  // ...children: ChildList
-): ChildTaggedTemplateFn<HTMLHeadingElement> {
-  return createElement("h1", attributes)
+  children?: ChildList
+): HTMLHeadingElement {
+  return createElement("h1", attributes, children)
 }
 
 export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   tag: TagName,
   attributes?: AttributeRecord,
-  // children?: ChildList,
-): ChildTaggedTemplateFn<HTMLElementTagNameMap[TagName]> {
+  children?: ChildList
+): HTMLElementTagNameMap[TagName] {
   const { register, destroy } = registry()
 
-  const ref: ReactiveHTMLElement<HTMLElementTagNameMap[TagName]> =
+  const ref: HTMLElementWithTeardown<HTMLElementTagNameMap[TagName]> =
     document.createElement(tag)
 
   if (attributes) {
@@ -53,52 +53,34 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
     })
   }
 
-  return (strings, ...expressions) => {
-    if (!strings) {
-      return ref
-    }
-
-    const childList: ChildList = []
-
-    // Collect all the strings and expressions into a chronological list so we can keep them in the order they were added
-    strings.forEach((str, idx) => {
-      childList.push(str)
-      if (expressions[idx]) {
-        childList.push(expressions[idx])
-      }
-    })
-
-    childList.forEach((child, idx) => {
+  if (children) {
+    children.forEach((child, idx) => {
       if (isObservable(child)) {
         register(child.subscribe((val) => appendOrReplaceChild(ref, idx, val)))
       } else {
         appendOrReplaceChild(ref, idx, child)
       }
     })
-
-    ref._destroy = destroy
-    return ref
   }
+
+  ref._teardown = destroy
+
+  return ref
 }
 
-// /**
-//  * @param strings {string[]}
-//  * @param expressions {...ChildList}
-//  * @returns
-//  */
-// export function $(strings: string[], ...expressions: ChildList): ChildList {
-//   const childList: ChildList = []
-//
-//   // Collect all the strings and expressions into a chronological list so we can keep them in the order they were added
-//   strings.forEach((str, idx) => {
-//     childList.push(str)
-//     if (expressions[idx]) {
-//       childList.push(expressions[idx])
-//     }
-//   })
-//
-//   return childList
-// }
+export function $(strings: TemplateStringsArray, ...expressions: ChildList): ChildList {
+  const childList: ChildList = []
+
+  // Collect all the strings and expressions into a chronological list so we can keep them in the order they were added
+  strings.forEach((str, idx) => {
+    childList.push(str)
+    if (expressions[idx]) {
+      childList.push(expressions[idx])
+    }
+  })
+
+  return childList
+}
 
 function appendOrReplaceChild(
   ref: HTMLElement,
@@ -106,11 +88,11 @@ function appendOrReplaceChild(
   val: ChildExpression,
 ) {
   const isNil = val === null || val === undefined
-  const currentNode = ref.childNodes[idx] as ReactiveHTMLElement
+  const currentNode = ref.childNodes[idx] as HTMLElementWithTeardown
 
   if (isNil && currentNode) {
     // if its nil and there is already a node at this idx, we need to remove it
-    currentNode._destroy?.()
+    currentNode._teardown?.()
     ref.removeChild(currentNode)
     return
   } else if (isNil) {
@@ -125,7 +107,7 @@ function appendOrReplaceChild(
 
   if (currentNode) {
     // Call the existing child node's teardown logic before we replace it with a new element
-    currentNode._destroy?.()
+    currentNode._teardown?.()
     ref.replaceChild(node, currentNode)
   } else {
     ref.appendChild(node)
