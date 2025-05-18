@@ -1,4 +1,4 @@
-import { div, button, input, h1, $, derive$, State, state$ } from './lib'
+import {div, button, input, h1, $, derive$, State, state$, ChildList} from './lib'
 
 // TODO:
 // component children (maybe with slots too?) should probably look the same as normal elements with a ChildTaggedTemplateFn
@@ -48,16 +48,24 @@ function MyComponent() {
         onkeyup: (e: KeyboardEvent) => buttonText.set$((e.currentTarget as HTMLInputElement).value),
         value: buttonText
       })}
-      ${MyButton({ buttonText })}
+      ${MyButton({ buttonText }, $`
+        hello world from child prop
+      `)}
     `)}
   `)
 }
 
-function MyButton({buttonText}: {buttonText: State<string>}) {
+function MyButton(
+    {buttonText, someOtherSlot}: {buttonText: State<string>, someOtherSlot?: ChildList},
+    children?: ChildList
+): HTMLButtonElement {
   function onclick() {
     alert(buttonText.value)
   }
-  return button({ onclick }, $`${buttonText}`)
+  return button({ onclick }, $`
+    ${buttonText}
+    ${div({}, children)}
+  `)
 }
 
 document.body.appendChild(MyComponent())
