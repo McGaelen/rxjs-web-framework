@@ -33,7 +33,6 @@ export function h1(attributes) {
 }
 
 /**
- * TODO: this doesn't handle removing event listeners or unsubscribing from observables!
  * @template Element
  * @param tag {string}
  * @param [attributes] {AttributeRecord<Element>}
