@@ -12,11 +12,9 @@ export type AttributeValue =
 export type AttributeRecord = Record<string, AttributeValue>
 
 export type ChildExpression = number | string | HTMLElement
-export type ChildList = Array<ChildExpression | Observable<ChildExpression>>
-export type ChildTaggedTemplateFn<T extends HTMLElementWithTeardown> = (
-  strings?: TemplateStringsArray,
-  ...expressions: ChildList
-) => T
+export type ChildExpressionOrObservable = ChildExpression | Observable<ChildExpression>
+export type ChildList = Array<ChildExpressionOrObservable>
+export type Children = Array<ChildExpressionOrObservable | ChildList> // Can be a 2d array depending on if $`` is used as an argument to an element's children prop.
 
 export type HTMLElementWithTeardown<Element extends HTMLElement = HTMLElement> =
   Element & { _teardown?: () => void }

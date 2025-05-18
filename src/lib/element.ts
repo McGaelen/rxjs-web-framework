@@ -1,19 +1,25 @@
 import { registry } from "./registry"
 import { isObservable } from "rxjs"
-import {AttributeRecord, ChildExpression, ChildList, ChildTaggedTemplateFn, HTMLElementWithTeardown} from "./index";
+import {
+  AttributeRecord,
+  ChildExpression,
+  ChildList,
+  Children,
+  HTMLElementWithTeardown
+} from "./index";
 
 export function div(
   attributes?: AttributeRecord,
-  children?: ChildList
+  ...children: Children
 ): HTMLDivElement {
-  return createElement("div", attributes, children)
+  return createElement("div", attributes, ...children)
 }
 
 export function button(
   attributes?: AttributeRecord,
-  children?: ChildList
+  ...children: Children
 ): HTMLButtonElement {
-  return createElement("button", attributes, children)
+  return createElement("button", attributes, ...children)
 }
 
 export function input(attributes?: AttributeRecord): HTMLInputElement {
@@ -22,15 +28,15 @@ export function input(attributes?: AttributeRecord): HTMLInputElement {
 
 export function h1(
   attributes?: AttributeRecord,
-  children?: ChildList
+  ...children: Children
 ): HTMLHeadingElement {
-  return createElement("h1", attributes, children)
+  return createElement("h1", attributes, ...children)
 }
 
 export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   tag: TagName,
   attributes?: AttributeRecord,
-  children?: ChildList
+  ...children: Children
 ): HTMLElementTagNameMap[TagName] {
   const { register, destroy } = registry()
 
@@ -54,7 +60,10 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   }
 
   if (children) {
-    children.forEach((child, idx) => {
+    // Children can contain ChildLists, which are arrays of ChildExpressions - need to flatten those out so we just have a clean ChildList.
+    const childList: ChildList = children.flat(1)
+
+    childList.flat(1).forEach((child, idx) => {
       if (isObservable(child)) {
         register(child.subscribe((val) => appendOrReplaceChild(ref, idx, val)))
       } else {

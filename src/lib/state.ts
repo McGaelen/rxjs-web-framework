@@ -5,7 +5,7 @@ export class State<T> extends BehaviorSubject<T> {
     super(initialVal)
   }
 
-  set$(newValOrFn: T | ((prevState: T) => T)) {
+  set(newValOrFn: T | ((prevState: T) => T)) {
     if (isSetFn<T>(newValOrFn)) {
       const returnedVal = newValOrFn(this.value)
       this.next(returnedVal)
@@ -14,7 +14,7 @@ export class State<T> extends BehaviorSubject<T> {
     }
   }
 
-  derive$<NewType>(deriveFn: (currentVal: T) => NewType): Observable<NewType> {
+  derive<NewType>(deriveFn: (currentVal: T) => NewType): Observable<NewType> {
     return this.pipe(map(deriveFn))
   }
 }
