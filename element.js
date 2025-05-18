@@ -1,8 +1,7 @@
-import {IfControlFlowBuilder} from "./control.js";
 import {registry} from "./utils.js";
 
 /**
- * @param [attributes] {AttributeRecord<HTMLDivElement>}
+ * @param [attributes] {AttributeRecord}
  * @returns {ChildTaggedTemplateFn<HTMLDivElement>}
  */
 export function div(attributes) {
@@ -10,11 +9,27 @@ export function div(attributes) {
 }
 
 /**
- * @param [attributes] {AttributeRecord<HTMLButtonElement>}
+ * @param [attributes] {AttributeRecord}
  * @returns {ChildTaggedTemplateFn<HTMLButtonElement>}
  */
 export function button(attributes) {
   return createElement('button', attributes)
+}
+
+/**
+ * @param [attributes] {AttributeRecord}
+ * @returns {HTMLInputElement}
+ */
+export function input(attributes) {
+  return createElement('input', attributes)()
+}
+
+/**
+ * @param [attributes] {AttributeRecord}
+ * @returns {ChildTaggedTemplateFn<HTMLHeadingElement>}
+ */
+export function h1(attributes) {
+  return createElement('h1', attributes)
 }
 
 /**
@@ -48,6 +63,10 @@ export function createElement(tag, attributes) {
   }
 
   return (strings, ...expressions) => {
+    if (!strings) {
+      return ref
+    }
+
     /** @type {ChildList} */
     const childList = []
 
@@ -60,20 +79,12 @@ export function createElement(tag, attributes) {
     })
 
     childList.forEach((child, idx) => {
-      if (child instanceof IfControlFlowBuilder) {
-        register(
-          child.build().subscribe(val => appendOrReplaceChild(ref, idx, val))
-        )
-      } else if (child.subscribe && typeof child.subscribe === 'function') {
+      if (child.subscribe && typeof child.subscribe === 'function') {
         register(
           child.subscribe(val => appendOrReplaceChild(ref, idx, val))
         )
-      } else if (typeof child === 'string') {
-        ref.appendChild(document.createTextNode(child))
-      } else if (typeof child === 'function') {
-        ref.appendChild(child())
       } else {
-        ref.appendChild(child)
+        appendOrReplaceChild(ref, idx, child)
       }
     })
 
@@ -87,8 +98,13 @@ function appendOrReplaceChild(ref, idx, val) {
   const isNil = val === null || val === undefined
 
   if (isNil && ref.childNodes[idx]) {
+    // if its nil and there is already a node at this idx, we need to remove it
     ref.childNodes[idx]._destroy?.()
     ref.removeChild(ref.childNodes[idx])
+    return
+  } else if (isNil) {
+    // dont add it do the DOM if its nil
+    return
   }
 
   const node = val instanceof HTMLElement

@@ -13,7 +13,6 @@ export function registry() {
       subs.push(sub)
     },
     destroy() {
-      console.log({subs})
       subs.forEach(sub => {
         if (sub.unsubscribe && typeof sub.unsubscribe === 'function') {
           sub.unsubscribe()

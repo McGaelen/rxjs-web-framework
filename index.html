@@ -2,63 +2,69 @@
 <html lang="en">
 <body>
   <script type="module">
-    // import { html } from './html.js'
-    import { div, button } from './element.js'
-    import {iif} from "./control.js";
-    import {state} from "./state.js";
-    import {map} from "rxjs";
+    import { div, button, input, h1 } from './element.js'
+    import {derive$, state$} from "./state.js";
 
     // TODO:
-    // conditional rendering
-    // derived state
-    // components
-    //   - needs props to be reactive
-    //   - needs to accept children
+    // component children (maybe with slots too?) should probably look the same as normal elements with a ChildTaggedTemplateFn
+    // async/promises/using fetch
+    // make the syntax not look like shit
 
-    const count = state(0)
-    const isVisible = state(true)
+    const count = state$(0)
+    const isVisible = state$(false)
+    const buttonText = state$('click me')
 
     function increment() {
       count.set$(val => val + 1)
     }
 
     function MyComponent() {
-      return div({ style: 'font-weight: bold;', })`
-        ${
-          div({ onclick: increment })`
-            counter value: ${count}
-            ${button({ onclick: increment })`${count}`}
-          `
-        }
+      return div({ style: 'font-weight: bold; font-family: sans-serif;' })`
+        ${div({ onclick: increment })`
+          ${h1()`Counter`}
+          counter value: ${count}
+          ${button({ onclick: increment })`${count}`}
+        `}
 
-        ${
-          div()`
-            toggle visibility
-            ${button({ onclick: () => isVisible.set$(val => !val)})`
-              show/hide
-            `}
+        ${div()`
+          ${h1()`toggle visibility`}
+          ${button({ onclick: () => isVisible.set$(val => !val)})`show/hide`}
+          ${
+            derive$((isVisible, count) => {
+              if (!isVisible) {
+                return 'hidden'
+              } else if (count > 10) {
+                return 'count is greater than 10'
+              } else if (count > 0) {
+                return 'count is less than 10'
+              } else {
+                return 'count is 0'
+              }
+            }, [isVisible, count])
+          }
+        `}
 
-            ${
-              // in reality we probably want to be able to do something like `iif(count >= 1)`
-              // and have that be reactive
-              iif(isVisible, () =>
-                div()`
-                  im showing!
-                  ${
-                    iif(count.derive$(c => c > 10), () =>
-                      div()`count is greater than 10`
-                    ).elseIf(count.derive$(c => c > 0), () =>
-                      'count is less than 10'
-                    ).else(() =>
-                      'count is 0 or less'
-                    )
-                  }
-                `
-              )
-            }
-          `
-        }
+        ${div()`
+          ${h1()`Subcomponent with reactive props:`}
+          ${div()`the button is in the MyButton component`}
+          ${input({
+            onkeyup: (e) => buttonText.set$(e.target.value),
+            value: buttonText
+          })}
+          ${MyButton({ buttonText })}
+        `}
       `
+    }
+
+    /**
+     * @param props {{buttonText: State<string>}}
+     * @returns HTMLButtonElement
+     */
+    function MyButton({buttonText}) {
+      function onclick() {
+        alert(buttonText.value)
+      }
+      return button({ onclick })`${buttonText}`
     }
 
     document.body.appendChild(MyComponent())
