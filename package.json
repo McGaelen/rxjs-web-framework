@@ -3,18 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "bunx --bun vite dev"
+    "dev": "bunx --bun vite dev",
+    "format": "bunx --bun prettier --write .",
+    "check": "bunx --bun tsc --noEmit"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "rxjs": "^7.8.2",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "prettier": "^3.5.3"
   },
-  "type": "module",
-  "dependencies": {
-    "@types/react": "^19.1.4",
-    "@types/react-dom": "^19.1.5"
-  }
+  "type": "module"
 }

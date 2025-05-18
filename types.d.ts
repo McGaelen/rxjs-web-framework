@@ -1,12 +1,24 @@
-import {BehaviorSubject, Observable, SubscriptionLike} from "rxjs";
+import { BehaviorSubject, Observable, SubscriptionLike } from "rxjs"
+import { State } from "./state"
 
 declare global {
-  type AttributeValue = Observable<string> | string | ((...args: any) => (any | void))
+  type AttributeValue =
+    | Observable<string>
+    | string
+    | ((...args: any) => any | void)
   type AttributeRecord = Record<string, AttributeValue>
-  type ChildList = Array<string | HTMLElement | Observable<string | HTMLElement>>
-  type ChildTaggedTemplateFn<T extends HTMLElement> = (strings: string[], ...expressions: ChildList) => T
 
-  type State<T> = BehaviorSubject<T> & { set$: (newVal: T) => void }
+  type ChildExpression = number | string | HTMLElement
+  type ChildList = Array<ChildExpression | Observable<ChildExpression>>
+  type ChildTaggedTemplateFn<T extends ReactiveHTMLElement> = (
+    strings?: TemplateStringsArray,
+    ...expressions: ChildList
+  ) => T
 
-  type SubscriptionOrEventListener = SubscriptionLike | {ref: HTMLElement, eventProp: string}
+  type ReactiveHTMLElement<Element extends HTMLElement = HTMLElement> =
+    Element & { _destroy?: () => void }
+
+  type SubscriptionOrEventListener =
+    | SubscriptionLike
+    | { ref: HTMLElement; eventProp: string }
 }
