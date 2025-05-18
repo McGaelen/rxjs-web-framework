@@ -1,4 +1,5 @@
-import { Observable, SubscriptionLike } from "rxjs"
+import {SubscriptionOrEventListener} from "./index";
+import {isSubscription} from "./utils";
 
 export type RegisterFn = (sub: SubscriptionOrEventListener) => void
 
@@ -20,12 +21,4 @@ export function registry(): { register: RegisterFn; destroy: VoidFunction } {
       })
     },
   }
-}
-
-export function isObservable<T>(val: any): val is Observable<T> {
-  return val?.subscribe && typeof val?.subscribe === "function"
-}
-
-export function isSubscription(val: any): val is SubscriptionLike {
-  return val.unsubscribe && typeof val.unsubscribe === "function"
 }

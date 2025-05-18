@@ -1,5 +1,6 @@
-import { registry } from "./utils.js"
+import { registry } from "./registry"
 import { isObservable } from "rxjs"
+import {AttributeRecord, ChildExpression, ChildList, ChildTaggedTemplateFn, ReactiveHTMLElement} from "./index";
 
 export function div(
   attributes?: AttributeRecord,

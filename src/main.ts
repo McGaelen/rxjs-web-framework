@@ -1,5 +1,5 @@
-import { div, button, input, h1 } from './element'
-import { derive$, State, state$ } from './state'
+import { div, button, input, h1 } from './lib'
+import { derive$, State, state$ } from './lib'
 
 // TODO:
 // component children (maybe with slots too?) should probably look the same as normal elements with a ChildTaggedTemplateFn
@@ -46,7 +46,7 @@ function MyComponent() {
       ${h1()`Subcomponent with reactive props:`}
       ${div()`the button is in the MyButton component`}
       ${input({
-        onkeyup: (e) => buttonText.set$(e.target.value),
+        onkeyup: (e: KeyboardEvent) => buttonText.set$((e.currentTarget as HTMLInputElement).value),
         value: buttonText
       })}
       ${MyButton({ buttonText })}
