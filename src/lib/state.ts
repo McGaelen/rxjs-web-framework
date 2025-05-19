@@ -1,4 +1,4 @@
-import { BehaviorSubject, combineLatest, map, Observable } from "rxjs"
+import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs'
 
 export class State<T> extends BehaviorSubject<T> {
   constructor(initialVal: T) {
@@ -33,5 +33,5 @@ export function derive$<NewType>(
 
 // See https://github.com/microsoft/TypeScript/issues/37663 on why `typeof x === 'function'` won't narrow x to a callable
 function isSetFn<T>(value: unknown): value is (arg: T) => T {
-  return typeof value === "function"
+  return typeof value === 'function'
 }

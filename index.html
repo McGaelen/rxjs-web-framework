@@ -1,6 +1,9 @@
 <!doctype html>
 <html lang="en">
   <body>
-    <script type="module" src="src/main.ts"></script>
+    <script type="module">
+      import { App } from './src/App.js'
+      document.body.appendChild(App())
+    </script>
   </body>
 </html>

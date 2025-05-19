@@ -1,8 +1,9 @@
-import type { Config } from "prettier"
+import type { Config } from 'prettier'
 
 export default {
-  arrowParens: "always",
+  arrowParens: 'always',
   semi: false,
-  trailingComma: "all",
+  trailingComma: 'all',
   tabWidth: 2,
+  singleQuote: true,
 } satisfies Config

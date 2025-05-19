@@ -1,41 +1,43 @@
-import { registry } from "./registry"
-import { isObservable } from "rxjs"
+import { registry } from './registry'
+import { isObservable } from 'rxjs'
 import {
   AttributeRecord,
   ChildExpression,
+  ChildExpressionOrObservable,
   ChildList,
   Children,
   HTMLElementWithTeardown,
-} from "./index"
+} from './index'
 
 export function div(
-  attributes?: AttributeRecord,
+  attributes?: AttributeRecord | ChildExpressionOrObservable,
   ...children: Children
 ): HTMLDivElement {
-  return createElement("div", attributes, ...children)
+  console.log({ attributes, children })
+  return createElement('div', attributes, ...children)
 }
 
 export function button(
-  attributes?: AttributeRecord,
+  attributes?: AttributeRecord | ChildExpressionOrObservable,
   ...children: Children
 ): HTMLButtonElement {
-  return createElement("button", attributes, ...children)
+  return createElement('button', attributes, ...children)
 }
 
 export function input(attributes?: AttributeRecord): HTMLInputElement {
-  return createElement("input", attributes)
+  return createElement('input', attributes)
 }
 
 export function h1(
-  attributes?: AttributeRecord,
+  attributes?: AttributeRecord | ChildExpressionOrObservable,
   ...children: Children
 ): HTMLHeadingElement {
-  return createElement("h1", attributes, ...children)
+  return createElement('h1', attributes, ...children)
 }
 
 export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   tag: TagName,
-  attributes?: AttributeRecord,
+  attributesOrChildExpression?: AttributeRecord | ChildExpressionOrObservable,
   ...children: Children
 ): HTMLElementTagNameMap[TagName] {
   const { register, destroy } = registry()
@@ -43,20 +45,25 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   const ref: HTMLElementWithTeardown<HTMLElementTagNameMap[TagName]> =
     document.createElement(tag)
 
-  if (attributes) {
-    Object.entries(attributes).forEach(([key, value]) => {
-      if (typeof value === "function") {
-        // if its a function, try to add it as an event listener
-        // @ts-expect-error TODO: improve the types here
-        ref[key] = value
-        register({ ref, eventProp: key })
-      } else if (isObservable(value)) {
-        register(value.subscribe((val) => ref.setAttribute(key, val)))
-      } else {
-        // otherwise, it is probably just a static value, so set it normally
-        ref.setAttribute(key, value)
-      }
-    })
+  if (attributesOrChildExpression) {
+    if (isChildExpressionOrObservable(attributesOrChildExpression)) {
+      // Since it's the first argument, we want it to be the first child
+      children.unshift(attributesOrChildExpression)
+    } else {
+      Object.entries(attributesOrChildExpression).forEach(([key, value]) => {
+        if (typeof value === 'function') {
+          // if its a function, try to add it as an event listener
+          // @ts-expect-error TODO: improve the types here
+          ref[key] = value
+          register({ ref, eventProp: key })
+        } else if (isObservable(value)) {
+          register(value.subscribe((val) => ref.setAttribute(key, val)))
+        } else {
+          // otherwise, it is probably just a static value, so set it normally
+          ref.setAttribute(key, value)
+        }
+      })
+    }
   }
 
   if (children) {
@@ -124,4 +131,15 @@ function appendOrReplaceChild(
   } else {
     ref.appendChild(node)
   }
+}
+
+function isChildExpressionOrObservable(
+  val: unknown,
+): val is ChildExpressionOrObservable {
+  return (
+    isObservable(val) ||
+    typeof val === 'string' ||
+    typeof val === 'number' ||
+    val instanceof HTMLElement
+  )
 }

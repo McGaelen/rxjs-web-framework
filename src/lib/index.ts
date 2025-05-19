@@ -1,8 +1,8 @@
-import { Observable, SubscriptionLike } from "rxjs"
+import { Observable, SubscriptionLike } from 'rxjs'
 
-export * from "./element"
-export * from "./state"
-export * from "./registry"
+export * from './element'
+export * from './state'
+export * from './registry'
 
 export type AttributeValue =
   | Observable<string>
@@ -10,7 +10,7 @@ export type AttributeValue =
   | ((...args: any) => any | void)
 export type AttributeRecord = Record<string, AttributeValue>
 
-export type ChildExpression = number | string | HTMLElement
+export type ChildExpression = number | string | HTMLElement | null | undefined
 export type ChildExpressionOrObservable =
   | ChildExpression
   | Observable<ChildExpression>

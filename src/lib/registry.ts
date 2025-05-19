@@ -1,5 +1,5 @@
-import { SubscriptionOrEventListener } from "./index"
-import { isSubscription } from "./utils"
+import { SubscriptionOrEventListener } from './index'
+import { isSubscription } from './utils'
 
 export type RegisterFn = (sub: SubscriptionOrEventListener) => void
 
