@@ -1,16 +1,17 @@
 import { registry } from './registry'
-import { isObservable } from 'rxjs'
+import { isObservable } from './utils'
 import {
   AttributeRecord,
+  ChildBaseExpression,
   ChildExpression,
-  ChildExpressionOrObservable,
   ChildList,
   Children,
   HTMLElementWithTeardown,
 } from './index'
+import { Observable } from 'rxjs'
 
 export function div(
-  attributes?: AttributeRecord | ChildExpressionOrObservable,
+  attributes?: AttributeRecord | ChildExpression,
   ...children: Children
 ): HTMLDivElement {
   console.log({ attributes, children })
@@ -18,7 +19,7 @@ export function div(
 }
 
 export function button(
-  attributes?: AttributeRecord | ChildExpressionOrObservable,
+  attributes?: AttributeRecord | ChildExpression,
   ...children: Children
 ): HTMLButtonElement {
   return createElement('button', attributes, ...children)
@@ -29,15 +30,29 @@ export function input(attributes?: AttributeRecord): HTMLInputElement {
 }
 
 export function h1(
-  attributes?: AttributeRecord | ChildExpressionOrObservable,
+  attributes?: AttributeRecord | ChildExpression,
   ...children: Children
 ): HTMLHeadingElement {
   return createElement('h1', attributes, ...children)
 }
 
+export function ul(
+  attributes?: AttributeRecord | ChildExpression,
+  ...children: Children
+): HTMLUListElement {
+  return createElement('ul', attributes, ...children)
+}
+
+export function li(
+  attributes?: AttributeRecord | ChildExpression,
+  ...children: Children
+): HTMLLIElement {
+  return createElement('li', attributes, ...children)
+}
+
 export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   tag: TagName,
-  attributesOrChildExpression?: AttributeRecord | ChildExpressionOrObservable,
+  attributesOrChildExpression?: AttributeRecord | ChildExpression,
   ...children: Children
 ): HTMLElementTagNameMap[TagName] {
   const { register, destroy } = registry()
@@ -68,11 +83,26 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
 
   if (children) {
     // Children can contain ChildLists, which are arrays of ChildExpressions - need to flatten those out so we just have a clean ChildList.
-    const childList: ChildList = children.flat(1)
+    const childList = children.flat(1)
 
-    childList.flat(1).forEach((child, idx) => {
+    childList.forEach((child, idx) => {
       if (isObservable(child)) {
-        register(child.subscribe((val) => appendOrReplaceChild(ref, idx, val)))
+        register(
+          (
+            child as Observable<ChildExpression> | Observable<ChildExpression[]>
+          ).subscribe((childVal: ChildExpression | ChildExpression[]) => {
+            if (Array.isArray(childVal)) {
+              // TODO: we can't use the idx of the childVal array, because it will start at 0 again, and clobber elements appended earlier.
+              // TODO: probably should only take an array of observables, which will get flattened out using the existing logic.
+              // TODO: if we get an observable of an array, we should just
+              childVal.forEach((val, childIdx) =>
+                appendOrReplaceChild(ref, childIdx + idx, val),
+              )
+            } else {
+              appendOrReplaceChild(ref, idx, childVal)
+            }
+          }),
+        )
       } else {
         appendOrReplaceChild(ref, idx, child)
       }
@@ -104,7 +134,7 @@ export function $(
 function appendOrReplaceChild(
   ref: HTMLElement,
   idx: number,
-  val: ChildExpression,
+  val: ChildBaseExpression,
 ) {
   const isNil = val === null || val === undefined
   const currentNode = ref.childNodes[idx] as HTMLElementWithTeardown
@@ -133,9 +163,7 @@ function appendOrReplaceChild(
   }
 }
 
-function isChildExpressionOrObservable(
-  val: unknown,
-): val is ChildExpressionOrObservable {
+function isChildExpressionOrObservable(val: unknown): val is ChildExpression {
   return (
     isObservable(val) ||
     typeof val === 'string' ||
