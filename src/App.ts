@@ -1,6 +1,5 @@
-import { div, button, input, h1, $, derive$, state$, ul, li } from './lib'
+import { div, button, input, h1, $, derive$, state$ } from './lib'
 import { MyButton } from './MyButton'
-import { TodoList } from './lib/TodoList'
 
 /**
  * TODO:
@@ -65,7 +64,5 @@ export function App() {
       }),
       MyButton({ buttonText$ }),
     ),
-
-    TodoList(),
   )
 }
