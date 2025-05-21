@@ -1,5 +1,9 @@
-import { SubscriptionOrEventListener } from './index'
 import { isSubscription } from './utils'
+import { SubscriptionLike } from 'rxjs'
+
+export type SubscriptionOrEventListener =
+  | SubscriptionLike
+  | { ref: HTMLElement; eventProp: string }
 
 export type RegisterFn = (sub: SubscriptionOrEventListener) => void
 

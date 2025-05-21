@@ -1,5 +1,15 @@
-import { div, button, input, h1, $, derive$, state$ } from './lib'
+import {
+  div,
+  button,
+  input,
+  h1,
+  $,
+  derive$,
+  state$,
+  ChildExpression,
+} from './lib'
 import { MyButton } from './MyButton'
+import { Observable } from 'rxjs'
 
 /**
  * TODO:
@@ -30,13 +40,15 @@ export function App() {
   }
 
   return div(
-    { style: 'font-weight: bold; font-family: sans-serif;' },
+    { style: 'font-family: sans-serif;' },
+
     div(
       { onclick: increment },
       h1('Counter'),
-      $`counter value: ${count$}`,
+      ...$`counter value: ${count$}`,
       button({ onclick: increment }, count$),
     ),
+
     div(
       h1('Toggle Visibility'),
       button({ onclick: toggleVisibility }, 'show/hide'),
@@ -55,6 +67,7 @@ export function App() {
         [isVisible$, count$],
       ),
     ),
+
     div(
       h1('Subcomponent with reactive props'),
       div('the button is in the MyButton component'),

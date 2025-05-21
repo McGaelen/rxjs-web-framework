@@ -1,25 +1,25 @@
 import { registry } from './registry'
 import { isObservable } from 'rxjs'
 import {
+  AttributeBaseExpression,
   AttributeRecord,
+  ChildBaseExpression,
   ChildExpression,
-  ChildExpressionOrObservable,
   ChildList,
-  Children,
   HTMLElementWithTeardown,
 } from './index'
 
 export function div(
-  attributes?: AttributeRecord | ChildExpressionOrObservable,
-  ...children: Children
+  attributes?: AttributeRecord | ChildExpression,
+  ...children: ChildList
 ): HTMLDivElement {
   console.log({ attributes, children })
   return createElement('div', attributes, ...children)
 }
 
 export function button(
-  attributes?: AttributeRecord | ChildExpressionOrObservable,
-  ...children: Children
+  attributes?: AttributeRecord | ChildExpression,
+  ...children: ChildList
 ): HTMLButtonElement {
   return createElement('button', attributes, ...children)
 }
@@ -29,16 +29,16 @@ export function input(attributes?: AttributeRecord): HTMLInputElement {
 }
 
 export function h1(
-  attributes?: AttributeRecord | ChildExpressionOrObservable,
-  ...children: Children
+  attributes?: AttributeRecord | ChildExpression,
+  ...children: ChildList
 ): HTMLHeadingElement {
   return createElement('h1', attributes, ...children)
 }
 
 export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   tag: TagName,
-  attributesOrChildExpression?: AttributeRecord | ChildExpressionOrObservable,
-  ...children: Children
+  attributesOrChildExpression?: AttributeRecord | ChildExpression,
+  ...children: ChildList
 ): HTMLElementTagNameMap[TagName] {
   const { register, destroy } = registry()
 
@@ -51,26 +51,17 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
       children.unshift(attributesOrChildExpression)
     } else {
       Object.entries(attributesOrChildExpression).forEach(([key, value]) => {
-        if (typeof value === 'function') {
-          // if its a function, try to add it as an event listener
-          // @ts-expect-error TODO: improve the types here
-          ref[key] = value
-          register({ ref, eventProp: key })
-        } else if (isObservable(value)) {
-          register(value.subscribe((val) => ref.setAttribute(key, val)))
+        if (isObservable(value)) {
+          register(value.subscribe((val) => addOrReplaceAttribute(ref, key, val)))
         } else {
-          // otherwise, it is probably just a static value, so set it normally
-          ref.setAttribute(key, value)
+          addOrReplaceAttribute(ref, key, value)
         }
       })
     }
   }
 
   if (children) {
-    // Children can contain ChildLists, which are arrays of ChildExpressions - need to flatten those out so we just have a clean ChildList.
-    const childList: ChildList = children.flat(1)
-
-    childList.flat(1).forEach((child, idx) => {
+    children.flat(1).forEach((child, idx) => {
       if (isObservable(child)) {
         register(child.subscribe((val) => appendOrReplaceChild(ref, idx, val)))
       } else {
@@ -101,10 +92,20 @@ export function $(
   return childList
 }
 
+function addOrReplaceAttribute(ref: HTMLElement, key: string, value: AttributeBaseExpression) {
+  if (typeof value === 'function') {
+    // if its a function, try to add it as an event listener
+    // @ts-expect-error TODO: improve the types here
+    ref[key] = value
+  } else if (value !== null && value !== undefined) {
+    ref.setAttribute(key, value.toString())
+  }
+}
+
 function appendOrReplaceChild(
   ref: HTMLElement,
   idx: number,
-  val: ChildExpression,
+  val: ChildBaseExpression,
 ) {
   const isNil = val === null || val === undefined
   const currentNode = ref.childNodes[idx] as HTMLElementWithTeardown
@@ -134,12 +135,12 @@ function appendOrReplaceChild(
 }
 
 function isChildExpressionOrObservable(
-  val: unknown,
-): val is ChildExpressionOrObservable {
+  val: AttributeRecord | ChildExpression,
+): val is ChildExpression {
   return (
-    isObservable(val) ||
-    typeof val === 'string' ||
-    typeof val === 'number' ||
-    val instanceof HTMLElement
+      isObservable(val) || // AttributeRecords themselves cannot be observables, only AttributeValues can
+      val instanceof HTMLElement ||
+      /** Check for all types in {@link Primitive}, except for null and undefined */
+      ['number', 'bigint', 'boolean', 'string'].includes(typeof val)
   )
 }

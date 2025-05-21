@@ -1,25 +1,28 @@
-import { Observable, SubscriptionLike } from 'rxjs'
+import { Observable } from 'rxjs'
 
 export * from './element'
 export * from './state'
 export * from './registry'
 
+/**
+ * All the primitives that are valid to add to DOM elements as attributes or children (with the except on null and undefined.)
+ * number, bigint, and booleans will have toString() called on them.
+ * strings are added as-is.
+ * null and undefined are ignored - they won't add anything to the DOM at all.
+ */
+export type Primitive = number | bigint | boolean | string | null | undefined
+
+export type AttributeBaseExpression = Primitive | ((...args: any) => unknown)
 export type AttributeValue =
-  | Observable<string>
-  | string
-  | ((...args: any) => any | void)
+  | AttributeBaseExpression
+  | Observable<AttributeBaseExpression>
 export type AttributeRecord = Record<string, AttributeValue>
 
-export type ChildExpression = number | string | HTMLElement | null | undefined
-export type ChildExpressionOrObservable =
-  | ChildExpression
-  | Observable<ChildExpression>
-export type ChildList = Array<ChildExpressionOrObservable>
-export type Children = Array<ChildExpressionOrObservable | ChildList> // Can be a 2d array depending on if $`` is used as an argument to an element's children prop.
+export type ChildBaseExpression = Primitive | HTMLElement
+export type ChildExpression =
+  | ChildBaseExpression
+  | Observable<ChildBaseExpression>
+export type ChildList = Array<ChildExpression>
 
 export type HTMLElementWithTeardown<Element extends HTMLElement = HTMLElement> =
   Element & { _teardown?: () => void }
-
-export type SubscriptionOrEventListener =
-  | SubscriptionLike
-  | { ref: HTMLElement; eventProp: string }
