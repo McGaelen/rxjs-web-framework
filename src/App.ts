@@ -7,9 +7,13 @@ import {
   derive$,
   state$,
   ChildExpression,
+  ul,
+  li,
+  ChildBaseExpression,
 } from './lib'
 import { MyButton } from './MyButton'
-import { Observable } from 'rxjs'
+import { map, Observable } from 'rxjs'
+import { TodoList } from './TodoList'
 
 /**
  * TODO:
@@ -77,5 +81,7 @@ export function App() {
       }),
       MyButton({ buttonText$ }),
     ),
+
+    TodoList(),
   )
 }

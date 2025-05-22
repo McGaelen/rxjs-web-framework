@@ -1,5 +1,4 @@
 import { registry } from './registry'
-import { isObservable } from 'rxjs'
 import {
   AttributeBaseExpression,
   AttributeRecord,
@@ -8,6 +7,7 @@ import {
   ChildList,
   HTMLElementWithTeardown,
 } from './index'
+import { isObservable } from './utils'
 
 export function div(
   attributes?: AttributeRecord | ChildExpression,
@@ -35,6 +35,20 @@ export function h1(
   return createElement('h1', attributes, ...children)
 }
 
+export function ul(
+  attributes?: AttributeRecord | ChildExpression,
+  ...children: ChildList
+): HTMLUListElement {
+  return createElement('ul', attributes, ...children)
+}
+
+export function li(
+  attributes?: AttributeRecord | ChildExpression,
+  ...children: ChildList
+): HTMLLIElement {
+  return createElement('li', attributes, ...children)
+}
+
 export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   tag: TagName,
   attributesOrChildExpression?: AttributeRecord | ChildExpression,
@@ -52,7 +66,9 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
     } else {
       Object.entries(attributesOrChildExpression).forEach(([key, value]) => {
         if (isObservable(value)) {
-          register(value.subscribe((val) => addOrReplaceAttribute(ref, key, val)))
+          register(
+            value.subscribe((val) => addOrReplaceAttribute(ref, key, val)),
+          )
         } else {
           addOrReplaceAttribute(ref, key, value)
         }
@@ -63,9 +79,23 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   if (children) {
     children.flat(1).forEach((child, idx) => {
       if (isObservable(child)) {
-        register(child.subscribe((val) => appendOrReplaceChild(ref, idx, val)))
+        register(
+          child.subscribe((val) => {
+            if (Array.isArray(val)) {
+              val.forEach((childExpr, subIdx) =>
+                appendOrReplaceChild(ref, idx + subIdx, childExpr),
+              )
+            } else {
+              appendOrReplaceChild(ref, idx, val)
+            }
+          }),
+        )
       } else {
+        // if (Array.isArray(child)) {
+        //   child.forEach((childExpr, subIdx) => appendOrReplaceChild(ref, idx + subIdx, childExpr))
+        // } else {
         appendOrReplaceChild(ref, idx, child)
+        // }
       }
     })
   }
@@ -92,7 +122,11 @@ export function $(
   return childList
 }
 
-function addOrReplaceAttribute(ref: HTMLElement, key: string, value: AttributeBaseExpression) {
+function addOrReplaceAttribute(
+  ref: HTMLElement,
+  key: string,
+  value: AttributeBaseExpression,
+) {
   if (typeof value === 'function') {
     // if its a function, try to add it as an event listener
     // @ts-expect-error TODO: improve the types here
@@ -138,9 +172,9 @@ function isChildExpressionOrObservable(
   val: AttributeRecord | ChildExpression,
 ): val is ChildExpression {
   return (
-      isObservable(val) || // AttributeRecords themselves cannot be observables, only AttributeValues can
-      val instanceof HTMLElement ||
-      /** Check for all types in {@link Primitive}, except for null and undefined */
-      ['number', 'bigint', 'boolean', 'string'].includes(typeof val)
+    isObservable(val) || // AttributeRecords themselves cannot be observables, only AttributeValues can
+    val instanceof HTMLElement ||
+    /** Check for all types in {@link Primitive}, except for null and undefined */
+    ['number', 'bigint', 'boolean', 'string'].includes(typeof val)
   )
 }
