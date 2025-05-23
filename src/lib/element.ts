@@ -1,5 +1,5 @@
 import { registry } from './registry'
-import { isObservable } from 'rxjs'
+import {isObservable, of, combineLatest} from 'rxjs'
 import {
   AttributeBaseExpression,
   AttributeRecord,
@@ -35,6 +35,20 @@ export function h1(
   return createElement('h1', attributes, ...children)
 }
 
+export function ul(
+    attributes?: AttributeRecord | ChildExpression,
+    ...children: ChildList
+): HTMLUListElement {
+  return createElement('ul', attributes, ...children)
+}
+
+export function li(
+    attributes?: AttributeRecord | ChildExpression,
+    ...children: ChildList
+): HTMLLIElement {
+  return createElement('li', attributes, ...children)
+}
+
 export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   tag: TagName,
   attributesOrChildExpression?: AttributeRecord | ChildExpression,
@@ -60,14 +74,26 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
     }
   }
 
+  let childMap = new Map<number | string, HTMLElement>()
+
+  let lastLength = 0
   if (children) {
-    children.flat(1).forEach((child, idx) => {
-      if (isObservable(child)) {
-        register(child.subscribe((val) => appendOrReplaceChild(ref, idx, val)))
-      } else {
+    combineLatest(children.map(c => isObservable(c) ? c : of(c))).subscribe(childs => {
+      childs.forEach((child, idx) => {
         appendOrReplaceChild(ref, idx, child)
+
+      })
+      if (childs.length < lastLength) {
+        // TODO: remove last children
       }
     })
+    // children.flat(1).forEach((child, idx) => {
+    //   if (isObservable(child)) {
+    //     register(child.subscribe((val) => appendOrReplaceChild(ref, idx, val)))
+    //   } else {
+    //     appendOrReplaceChild(ref, idx, child)
+    //   }
+    // })
   }
 
   ref._teardown = destroy
