@@ -21,9 +21,7 @@ export type AttributeRecord = Record<string, AttributeValue>
 export type ChildBaseExpression = Primitive | HTMLElement
 export type ChildExpression =
   | ChildBaseExpression
-  | ChildBaseExpression[] //TODO: support plain arrays
-  | Observable<ChildBaseExpression | ChildBaseExpression[]>
-// | Observable<>
+  | Observable<ChildBaseExpression>
 export type ChildList = Array<ChildExpression>
 
 export type HTMLElementWithTeardown<Element extends HTMLElement = HTMLElement> =

@@ -8,9 +8,7 @@ export class State<T> extends BehaviorSubject<T> {
   set(newValOrFn: T | ((prevState: T) => T)) {
     if (isSetFn<T>(newValOrFn)) {
       const returnedVal = newValOrFn(this.value)
-      if (returnedVal !== this.value) {
-        this.next(returnedVal)
-      }
+      this.next(returnedVal)
     } else {
       this.next(newValOrFn)
     }
@@ -18,18 +16,6 @@ export class State<T> extends BehaviorSubject<T> {
 
   derive<NewType>(deriveFn: (currentVal: T) => NewType): Observable<NewType> {
     return this.pipe(map(deriveFn))
-  }
-
-  map<NewType, ArrayType = T extends Array<any> ? T[number] : never>(
-    eachFn: (val: ArrayType, index: number, array: Array<ArrayType>) => NewType,
-  ): Observable<Array<NewType>> {
-    if (Array.isArray(this.value)) {
-      return this.derive((currentVal) =>
-        (currentVal as Array<ArrayType>).map(eachFn),
-      )
-    } else {
-      throw new Error('Tried to call each() on something that is not an array!')
-    }
   }
 }
 
