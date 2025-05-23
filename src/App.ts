@@ -21,6 +21,7 @@ import {TodoList} from "./TodoList";
  * support attributes that use back ticks with an observable somewhere within it
  *    - can we reuse $`` for this?
  * for loops
+ * deep reactivity for objects (probably need proxies for this)
  */
 
 export function App() {

@@ -20,9 +20,12 @@ export type AttributeRecord = Record<string, AttributeValue>
 
 export type ChildBaseExpression = Primitive | HTMLElement
 export type ChildExpression =
-  | ChildBaseExpression
-  | Observable<ChildBaseExpression>
-export type ChildList = Array<ChildExpression>
+  | ChildBaseExpression // A static, non-reactive value
+  | Array<ChildBaseExpression | Observable<ChildBaseExpression>> // an array containing  a mix of static and reactive values
+  | Observable< // An observable which can return the same as the above
+    | ChildBaseExpression
+    | Array<ChildBaseExpression | Observable<ChildBaseExpression>>
+  >
 
 export type HTMLElementWithTeardown<Element extends HTMLElement = HTMLElement> =
   Element & { _teardown?: () => void }

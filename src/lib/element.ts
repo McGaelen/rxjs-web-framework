@@ -1,17 +1,17 @@
 import { registry } from './registry'
-import {isObservable, of, combineLatest} from 'rxjs'
+import { of, combineLatest, Observable} from 'rxjs'
 import {
   AttributeBaseExpression,
   AttributeRecord,
   ChildBaseExpression,
   ChildExpression,
-  ChildList,
   HTMLElementWithTeardown,
 } from './index'
+import {isObservable} from "./utils";
 
 export function div(
   attributes?: AttributeRecord | ChildExpression,
-  ...children: ChildList
+  ...children: ChildExpression[]
 ): HTMLDivElement {
   console.log({ attributes, children })
   return createElement('div', attributes, ...children)
@@ -19,7 +19,7 @@ export function div(
 
 export function button(
   attributes?: AttributeRecord | ChildExpression,
-  ...children: ChildList
+  ...children: ChildExpression[]
 ): HTMLButtonElement {
   return createElement('button', attributes, ...children)
 }
@@ -30,21 +30,21 @@ export function input(attributes?: AttributeRecord): HTMLInputElement {
 
 export function h1(
   attributes?: AttributeRecord | ChildExpression,
-  ...children: ChildList
+  ...children: ChildExpression[]
 ): HTMLHeadingElement {
   return createElement('h1', attributes, ...children)
 }
 
 export function ul(
     attributes?: AttributeRecord | ChildExpression,
-    ...children: ChildList
+    ...children: ChildExpression[]
 ): HTMLUListElement {
   return createElement('ul', attributes, ...children)
 }
 
 export function li(
     attributes?: AttributeRecord | ChildExpression,
-    ...children: ChildList
+    ...children: ChildExpression[]
 ): HTMLLIElement {
   return createElement('li', attributes, ...children)
 }
@@ -52,7 +52,7 @@ export function li(
 export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   tag: TagName,
   attributesOrChildExpression?: AttributeRecord | ChildExpression,
-  ...children: ChildList
+  ...children: ChildExpression[]
 ): HTMLElementTagNameMap[TagName] {
   const { register, destroy } = registry()
 
@@ -76,17 +76,29 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
 
   let childMap = new Map<number | string, HTMLElement>()
 
-  let lastLength = 0
   if (children) {
-    combineLatest(children.map(c => isObservable(c) ? c : of(c))).subscribe(childs => {
-      childs.forEach((child, idx) => {
-        appendOrReplaceChild(ref, idx, child)
+    /** Try 3: */
+    // flat(1) to handle static arrays, just by flattening them out
+    // TODO: try to make this a totally flattened list, incl. inner observables
+    children.flat(1).forEach((child, idx) => {
+      if (isObservable(child)) {
 
-      })
-      if (childs.length < lastLength) {
-        // TODO: remove last children
+      } else {
+
       }
     })
+    /** Try 2: */
+    // combineLatest(children.map(c => isObservable(c) ? c : of(c))).subscribe(childs => {
+    //   childs.forEach((child, idx) => {
+    //     appendOrReplaceChild(ref, idx, child)
+    //
+    //   })
+    //   if (childs.length < lastLength) {
+    //     range(childs.length, lastLength).forEach(idx => ref.removeChild(ref.childNodes[idx]))
+    //   }
+    //   lastLength = childs.length
+    // })
+    /** Try 1: */
     // children.flat(1).forEach((child, idx) => {
     //   if (isObservable(child)) {
     //     register(child.subscribe((val) => appendOrReplaceChild(ref, idx, val)))
@@ -103,9 +115,9 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
 
 export function $(
   strings: TemplateStringsArray,
-  ...expressions: ChildList
-): ChildList {
-  const childList: ChildList = []
+  ...expressions: Array<ChildBaseExpression | Observable<ChildBaseExpression>>
+): ChildExpression {
+  const childList: ChildExpression = []
 
   // Collect all the strings and expressions into a chronological list so we can keep them in the order they were added
   strings.forEach((str, idx) => {
@@ -164,9 +176,10 @@ function isChildExpressionOrObservable(
   val: AttributeRecord | ChildExpression,
 ): val is ChildExpression {
   return (
-      isObservable(val) || // AttributeRecords themselves cannot be observables, only AttributeValues can
-      val instanceof HTMLElement ||
       /** Check for all types in {@link Primitive}, except for null and undefined */
-      ['number', 'bigint', 'boolean', 'string'].includes(typeof val)
+      ['number', 'bigint', 'boolean', 'string'].includes(typeof val) ||
+      val instanceof HTMLElement ||
+      Array.isArray(val) ||
+      isObservable(val) // AttributeRecords themselves cannot be observables, only AttributeValues can
   )
 }
