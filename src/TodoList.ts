@@ -37,9 +37,9 @@ export function TodoList() {
       input({ value: description$, onkeyup: setDescription }),
       button({ onclick: addTodo }, 'Add todo'),
       ul(
-          staticArray.map(fruit => div(fruit)),
-          ['hello world ', description$],
-          $`some text in a $ statement`,
+          // staticArray.map(fruit => div(fruit)),
+          // ['hello world ', description$],
+          // $`some text in a $ statement`,
           todos$.map((val, idx) =>
               li(
                   { style: 'display: flex; gap: 5px;'},

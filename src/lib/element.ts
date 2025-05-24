@@ -91,6 +91,7 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
       // TODO: this needs to:
       // TODO: 1) remove trailing elements when length differs
       // TODO: 2) use keyed elements
+      // TODO: 3) only update elements that changed - currently it just re-adds EVERYTHING.
       childs.forEach((child, idx) => appendOrReplaceChild(ref, idx, child))
       if (childs.length < lastLength) {
         range(childs.length, lastLength).forEach(idx => {
@@ -99,6 +100,7 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
           ref.removeChild(node)
         })
       }
+      lastLength = childs.length
     })
   }
 

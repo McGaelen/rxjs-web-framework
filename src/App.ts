@@ -12,18 +12,6 @@ import { MyButton } from './MyButton'
 import { Observable } from 'rxjs'
 import {TodoList} from "./TodoList";
 
-/**
- * TODO:
- * component children (maybe with slots too?) should probably look the same as normal elements
- *    - maybe just accept an HTMLElement instead of a ChildList/ChildExpression?
- * async/promises/using fetch
- * make a test page that does something more advanced than a counter
- * support attributes that use back ticks with an observable somewhere within it
- *    - can we reuse $`` for this?
- * for loops
- * deep reactivity for objects (probably need proxies for this)
- */
-
 export function App() {
   const count$ = state$(0)
   const isVisible$ = state$(false)
@@ -47,7 +35,7 @@ export function App() {
     div(
       { onclick: increment },
       h1('Counter'),
-      ...$`counter value: ${count$}`,
+      $`counter value: ${count$}`,
       button({ onclick: increment }, count$),
     ),
 
