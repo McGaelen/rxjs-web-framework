@@ -37,7 +37,6 @@ export function TodoList() {
       input({ value: description$, onkeyup: setDescription }),
       button({ onclick: addTodo }, 'Add todo'),
       ul(
-          {style: ''},
           staticArray.map(fruit => div(fruit)),
           ['hello world ', description$],
           $`some text in a $ statement`,
@@ -45,7 +44,9 @@ export function TodoList() {
               li(
                   { style: 'display: flex; gap: 5px;'},
                   val.description,
-                  button({ onclick: () => removeTodo(idx) }, 'remove'),
+                  button({ onclick: () => removeTodo(idx) },
+                      'remove'
+                  ),
               ),
           ),
       ),

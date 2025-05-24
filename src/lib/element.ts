@@ -1,5 +1,5 @@
 import { registry } from './registry'
-import { of, combineLatest, Observable} from 'rxjs'
+import {of, combineLatest, Observable, map, mergeAll, combineLatestAll} from 'rxjs'
 import {
   AttributeBaseExpression,
   AttributeRecord,
@@ -8,6 +8,7 @@ import {
   HTMLElementWithTeardown,
 } from './index'
 import {isObservable} from "./utils";
+import {range} from "lodash-es";
 
 export function div(
   attributes?: AttributeRecord | ChildExpression,
@@ -58,6 +59,7 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
 
   const ref: HTMLElementWithTeardown<HTMLElementTagNameMap[TagName]> =
     document.createElement(tag)
+  ref._teardown = destroy
 
   if (attributesOrChildExpression) {
     if (isChildExpressionOrObservable(attributesOrChildExpression)) {
@@ -77,38 +79,28 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   let childMap = new Map<number | string, HTMLElement>()
 
   if (children) {
-    /** Try 3: */
-    // flat(1) to handle static arrays, just by flattening them out
-    // TODO: try to make this a totally flattened list, incl. inner observables
-    children.flat(1).forEach((child, idx) => {
-      if (isObservable(child)) {
-
-      } else {
-
+    let lastLength = 0
+    // TODO: do something smarter so this doesn't look like shit
+    combineLatest(
+        // flat(1) to handle static arrays, just by flattening them out
+        children.flat(1).map(c => isObservable(c) ? c : of(c))
+    ).pipe(
+        map(childs => combineLatest(childs.flat(1).map(c => isObservable(c) ? c : of(c)))),
+        mergeAll()
+    ).subscribe(childs => {
+      // TODO: this needs to:
+      // TODO: 1) remove trailing elements when length differs
+      // TODO: 2) use keyed elements
+      childs.forEach((child, idx) => appendOrReplaceChild(ref, idx, child))
+      if (childs.length < lastLength) {
+        range(childs.length, lastLength).forEach(idx => {
+          const node = ref.childNodes[idx] as HTMLElementWithTeardown
+          node._teardown?.()
+          ref.removeChild(node)
+        })
       }
     })
-    /** Try 2: */
-    // combineLatest(children.map(c => isObservable(c) ? c : of(c))).subscribe(childs => {
-    //   childs.forEach((child, idx) => {
-    //     appendOrReplaceChild(ref, idx, child)
-    //
-    //   })
-    //   if (childs.length < lastLength) {
-    //     range(childs.length, lastLength).forEach(idx => ref.removeChild(ref.childNodes[idx]))
-    //   }
-    //   lastLength = childs.length
-    // })
-    /** Try 1: */
-    // children.flat(1).forEach((child, idx) => {
-    //   if (isObservable(child)) {
-    //     register(child.subscribe((val) => appendOrReplaceChild(ref, idx, val)))
-    //   } else {
-    //     appendOrReplaceChild(ref, idx, child)
-    //   }
-    // })
   }
-
-  ref._teardown = destroy
 
   return ref
 }

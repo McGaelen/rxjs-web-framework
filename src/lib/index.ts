@@ -29,3 +29,10 @@ export type ChildExpression =
 
 export type HTMLElementWithTeardown<Element extends HTMLElement = HTMLElement> =
   Element & { _teardown?: () => void }
+
+
+// export type ChildExpression =
+    // Observable< // An observable which can return the same as the above
+    //     | ChildBaseExpression
+    //     | Array<ChildBaseExpression | Observable<ChildBaseExpression>>
+    // >
