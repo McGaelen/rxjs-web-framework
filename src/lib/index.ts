@@ -18,7 +18,7 @@ export type AttributeValue =
   | Observable<AttributeBaseExpression>
 export type AttributeRecord = Record<string, AttributeValue>
 
-export type ChildBaseExpression = Primitive | HTMLElement
+export type ChildBaseExpression = Primitive | HTMLElement | FragmentElementBuilder
 export type ChildExpression =
   | ChildBaseExpression // A static, non-reactive value
   | Array<ChildBaseExpression | Observable<ChildBaseExpression>> // an array containing  a mix of static and reactive values
@@ -29,3 +29,4 @@ export type ChildExpression =
 
 export type HTMLElementWithTeardown<Element extends HTMLElement = HTMLElement> =
   Element & { _teardown?: () => void }
+export type FragmentElementBuilder = (parentRef: HTMLElement, startOffset: number) => void

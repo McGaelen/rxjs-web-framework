@@ -1,4 +1,4 @@
-import {$, button, div, h1, input, li, state$, ul} from './lib'
+import {$, button, div, f, h1, input, li, state$, ul} from './lib'
 
 export function TodoList() {
   const description$ = state$('')
@@ -25,14 +25,14 @@ export function TodoList() {
   }
 
   function removeTodo(index: number) {
-    todos$.set((todos) => [
-      ...todos.slice(undefined, index),
-      ...todos.slice(index + 1),
-    ])
+    console.log(index)
+    todos$.set((todos) => todos.toSpliced(index, 1))
   }
 
+  todos$.subscribe(console.log)
+
   // TODO: dom elements aren't removed when removed from the array
-  return div(
+  return f(
       h1('Todo list'),
       input({ value: description$, onkeyup: setDescription }),
       button({ onclick: addTodo }, 'Add todo'),
@@ -40,6 +40,7 @@ export function TodoList() {
           // staticArray.map(fruit => div(fruit)),
           // ['hello world ', description$],
           // $`some text in a $ statement`,
+          // f(
           todos$.map((val, idx) =>
               li(
                   { style: 'display: flex; gap: 5px;'},
@@ -49,6 +50,7 @@ export function TodoList() {
                   ),
               ),
           ),
+          // )
       ),
   )
 }

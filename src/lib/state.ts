@@ -37,8 +37,8 @@ export function state$<T>(initialVal: T): State<T> {
 
 // TODO: could improve with more generics for each value in Deps
 export function derive$<NewType>(
-  deriveFn: (...vals: any[]) => NewType,
   deps: Observable<any>[],
+  deriveFn: (...vals: any[]) => NewType,
 ): Observable<NewType> {
   return combineLatest(deps).pipe(map((vals) => deriveFn(...vals)))
 }
