@@ -6,8 +6,10 @@ import {
   $,
   derive$,
   state$,
+  ChildExpression,
 } from './lib'
 import { MyButton } from './MyButton'
+import { Observable } from 'rxjs'
 import {TodoList} from "./TodoList";
 
 export function App() {
@@ -41,7 +43,6 @@ export function App() {
       h1('Toggle Visibility'),
       button({ onclick: toggleVisibility }, 'show/hide'),
       derive$(
-        [isVisible$, count$],
         (isVisible, count) => {
           if (!isVisible) {
             return null
@@ -53,6 +54,7 @@ export function App() {
             return 'count is 0'
           }
         },
+        [isVisible$, count$],
       ),
     ),
 

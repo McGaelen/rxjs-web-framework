@@ -4,7 +4,7 @@ import {
   AttributeBaseExpression,
   AttributeRecord,
   ChildBaseExpression,
-  ChildExpression, FragmentElementBuilder,
+  ChildExpression,
   HTMLElementWithTeardown,
 } from './index'
 import {isObservable} from "./utils";
@@ -78,81 +78,33 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
 
   let childMap = new Map<number | string, HTMLElement>()
 
-  /**
-   * try this:
-   * add a fragment element that doesn't add dom, but still manages it's children
-   * add an `each$()` function to state.ts that maps an array inside of a fragment and takes a key
-   *    - i don't like this because it means that state$ has to be coupled to doing HTML/DOM things, when it really should just be a simple wrapper around an observable
-   * fragment handles updating only children that changed
-   */
-  f(...children)(ref, 0)
-  // if (children) {
-  //   let lastLength = 0
-  //   // TODO: do something smarter so this doesn't look like shit
-  //   combineLatest(
-  //       // flat(1) to handle static arrays, just by flattening them out
-  //       children.flat(1).map(c => isObservable(c) ? c : of(c))
-  //   ).pipe(
-  //       map(childs => combineLatest(childs.flat(1).map(c => isObservable(c) ? c : of(c)))),
-  //       mergeAll()
-  //   ).subscribe(childs => {
-  //     // TODO: this needs to:
-  //     // TODO: 1) remove trailing elements when length differs
-  //     // TODO: 2) use keyed elements
-  //     // TODO: 3) only update elements that changed - currently it just re-adds EVERYTHING.
-  //     childs.forEach((child, idx) => appendOrReplaceChild(ref, idx, child))
-  //     if (childs.length < lastLength) {
-  //       range(childs.length, lastLength).forEach(idx => {
-  //         const node = ref.childNodes[idx] as HTMLElementWithTeardown
-  //         node._teardown?.()
-  //         ref.removeChild(node)
-  //       })
-  //     }
-  //     lastLength = childs.length
-  //   })
-  // }
+  if (children) {
+    let lastLength = 0
+    // TODO: do something smarter so this doesn't look like shit
+    combineLatest(
+        // flat(1) to handle static arrays, just by flattening them out
+        children.flat(1).map(c => isObservable(c) ? c : of(c))
+    ).pipe(
+        map(childs => combineLatest(childs.flat(1).map(c => isObservable(c) ? c : of(c)))),
+        mergeAll()
+    ).subscribe(childs => {
+      // TODO: this needs to:
+      // TODO: 1) remove trailing elements when length differs
+      // TODO: 2) use keyed elements
+      // TODO: 3) only update elements that changed - currently it just re-adds EVERYTHING.
+      childs.forEach((child, idx) => appendOrReplaceChild(ref, idx, child))
+      if (childs.length < lastLength) {
+        range(childs.length, lastLength).forEach(idx => {
+          const node = ref.childNodes[idx] as HTMLElementWithTeardown
+          node._teardown?.()
+          ref.removeChild(node)
+        })
+      }
+      lastLength = childs.length
+    })
+  }
 
   return ref
-}
-
-
-
-export function f(...children: ChildExpression[]): FragmentElementBuilder {
-  return (parentRef, startOffset) => {
-    if (children) {
-      let lastLength = 0
-      // TODO: do something smarter so this doesn't look like shit
-      // TODO: also it's bugged because if there are 0 elements, it doesn't fire at all, so the last orphan node is never removed.
-      combineLatest(
-          // flat(1) to handle static arrays, just by flattening them out
-          children.flat(1).map(c => isObservable(c) ? c : of(c))
-      ).pipe(
-          map(childs => combineLatest(childs.flat(1).map(c => isObservable(c) ? c : of(c)))),
-          mergeAll()
-      ).subscribe(childs => {
-        // TODO: this needs to:
-        // TODO: 1) remove trailing elements when length differs
-        // TODO: 2) use keyed elements
-        // TODO: 3) only update elements that changed - currently it just re-adds EVERYTHING.
-        childs.forEach((child, idx) => {
-          if (typeof child === 'function') {
-            child(parentRef, idx)
-          } else {
-            appendOrReplaceChild(parentRef, idx + startOffset, child)
-          }
-        })
-        console.log('FIRING!!!')
-        if (childs.length < lastLength) {
-          range(childs.length, lastLength).forEach(idx => {
-            const node = parentRef.childNodes[idx + startOffset] as HTMLElementWithTeardown
-            node._teardown?.()
-            parentRef.removeChild(node)
-          })
-        }
-        lastLength = childs.length
-      })
-    }
-  }
 }
 
 export function $(
