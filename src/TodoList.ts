@@ -1,4 +1,4 @@
-import { $, button, div, each$, h1, input, li, state$, ul } from './lib'
+import { button, div, each$, h1, input, li, state$, ul } from './lib'
 
 export function TodoList() {
   const description$ = state$('')
@@ -10,11 +10,11 @@ export function TodoList() {
   const staticArray = ['apple', 'banana', 'cherry']
 
   function setDescription(e: KeyboardEvent) {
-    description$.set((e.target as HTMLInputElement).value)
+    description$.set$((e.target as HTMLInputElement).value)
   }
 
   function addTodo() {
-    todos$.set((todos) => [
+    todos$.set$((todos) => [
       ...todos,
       {
         id: todos.length,
@@ -24,8 +24,19 @@ export function TodoList() {
     ])
   }
 
+  function addTodoToTop() {
+    todos$.set$(todos => [
+      {
+        id: todos.length,
+        description: description$.value,
+        done: false,
+      },
+      ...todos,
+    ])
+  }
+
   function removeTodo(index: number) {
-    todos$.set((todos) => [
+    todos$.set$((todos) => [
       ...todos.slice(undefined, index),
       ...todos.slice(index + 1),
     ])
@@ -35,6 +46,7 @@ export function TodoList() {
     h1('Todo list'),
     input({ value: description$, onkeyup: setDescription }),
     button({ onclick: addTodo }, 'Add todo'),
+    button({ onclick: addTodoToTop }, 'Add todo to Top'),
     ul(
       { style: 'width: 200px;' },
       // staticArray.map(fruit => div(fruit)),

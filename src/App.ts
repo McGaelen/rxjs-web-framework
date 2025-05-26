@@ -18,15 +18,15 @@ export function App() {
   const buttonText$ = state$('click me')
 
   function increment() {
-    count$.set((val) => val + 1)
+    count$.set$((val) => val + 1)
   }
 
   function toggleVisibility() {
-    isVisible$.set((val) => !val)
+    isVisible$.set$((val) => !val)
   }
 
   function setButtonText(e: KeyboardEvent) {
-    buttonText$.set((e.currentTarget as HTMLInputElement).value)
+    buttonText$.set$((e.currentTarget as HTMLInputElement).value)
   }
 
   return div(
