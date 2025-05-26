@@ -1,5 +1,5 @@
 import { registry } from './registry'
-import {of, combineLatest, Observable, map, mergeAll, combineLatestAll} from 'rxjs'
+import { Observable } from 'rxjs'
 import {
   AttributeBaseExpression,
   AttributeRecord,
@@ -7,8 +7,13 @@ import {
   ChildExpression,
   HTMLElementWithTeardown,
 } from './index'
-import {isObservable} from "./utils";
-import {range} from "lodash-es";
+import { isObservable } from './utils'
+import { isNil, range } from 'lodash-es'
+
+type NonNullableChildBaseExpression = Exclude<
+  ChildBaseExpression,
+  null | undefined
+>
 
 export function div(
   attributes?: AttributeRecord | ChildExpression,
@@ -37,15 +42,15 @@ export function h1(
 }
 
 export function ul(
-    attributes?: AttributeRecord | ChildExpression,
-    ...children: ChildExpression[]
+  attributes?: AttributeRecord | ChildExpression,
+  ...children: ChildExpression[]
 ): HTMLUListElement {
   return createElement('ul', attributes, ...children)
 }
 
 export function li(
-    attributes?: AttributeRecord | ChildExpression,
-    ...children: ChildExpression[]
+  attributes?: AttributeRecord | ChildExpression,
+  ...children: ChildExpression[]
 ): HTMLLIElement {
   return createElement('li', attributes, ...children)
 }
@@ -68,7 +73,9 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
     } else {
       Object.entries(attributesOrChildExpression).forEach(([key, value]) => {
         if (isObservable(value)) {
-          register(value.subscribe((val) => addOrReplaceAttribute(ref, key, val)))
+          register(
+            value.subscribe((val) => addOrReplaceAttribute(ref, key, val)),
+          )
         } else {
           addOrReplaceAttribute(ref, key, value)
         }
@@ -76,31 +83,40 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
     }
   }
 
-  let childMap = new Map<number | string, HTMLElement>()
-
+  // Right now we are taking an array and mapping each entry to a map.
+  // But what if instead of trying to make that work, we just have the user specify a Map themselves?
+  // (and we give them a convenient way to do it? maybe the map function should actually make a map?)
+  // Basically, it should be the responsibility of state.ts to only fire for values that were updated, instead of createElement trying to figure that out.
   if (children) {
-    let lastLength = 0
-    // TODO: do something smarter so this doesn't look like shit
-    combineLatest(
-        // flat(1) to handle static arrays, just by flattening them out
-        children.flat(1).map(c => isObservable(c) ? c : of(c))
-    ).pipe(
-        map(childs => combineLatest(childs.flat(1).map(c => isObservable(c) ? c : of(c)))),
-        mergeAll()
-    ).subscribe(childs => {
-      // TODO: this needs to:
-      // TODO: 1) remove trailing elements when length differs
-      // TODO: 2) use keyed elements
-      // TODO: 3) only update elements that changed - currently it just re-adds EVERYTHING.
-      childs.forEach((child, idx) => appendOrReplaceChild(ref, idx, child))
-      if (childs.length < lastLength) {
-        range(childs.length, lastLength).forEach(idx => {
-          const node = ref.childNodes[idx] as HTMLElementWithTeardown
-          node._teardown?.()
-          ref.removeChild(node)
+    children.flat(1).forEach((childExpr, idx) => {
+      // handle reactive values
+      if (isObservable(childExpr)) {
+        let lastChildCount = 0 // save the prevous len
+        childExpr.subscribe((expr) => {
+          if (Array.isArray(expr)) {
+            let nils = 0
+            expr.forEach((innerChild, innerIdx) => {
+              if (isNil(innerChild)) {
+                nils++
+              } else {
+                appendOrReplaceChild(ref, innerIdx + idx - nils, innerChild)
+              }
+            })
+
+            if (expr.length < lastChildCount) {
+              range(expr.length, lastChildCount).forEach((idx) =>
+                removeChildNode(ref, ref.childNodes[idx]),
+              )
+            }
+            lastChildCount = expr.length
+          } else if (!isNil(expr)) {
+            appendOrReplaceChild(ref, idx, expr)
+          }
         })
-      }
-      lastLength = childs.length
+      } else if (!isNil(childExpr)) {
+        // handle static values
+        appendOrReplaceChild(ref, idx, childExpr)
+      } // ignore null or undefined values
     })
   }
 
@@ -124,7 +140,11 @@ export function $(
   return childList
 }
 
-function addOrReplaceAttribute(ref: HTMLElement, key: string, value: AttributeBaseExpression) {
+function addOrReplaceAttribute(
+  ref: HTMLElement,
+  key: string,
+  value: AttributeBaseExpression,
+) {
   if (typeof value === 'function') {
     // if its a function, try to add it as an event listener
     // @ts-expect-error TODO: improve the types here
@@ -137,25 +157,21 @@ function addOrReplaceAttribute(ref: HTMLElement, key: string, value: AttributeBa
 function appendOrReplaceChild(
   ref: HTMLElement,
   idx: number,
-  val: ChildBaseExpression,
+  val: NonNullableChildBaseExpression,
 ) {
   const isNil = val === null || val === undefined
   const currentNode = ref.childNodes[idx] as HTMLElementWithTeardown
 
   if (isNil && currentNode) {
     // if its nil and there is already a node at this idx, we need to remove it
-    currentNode._teardown?.()
-    ref.removeChild(currentNode)
+    removeChildNode(ref, currentNode)
     return
   } else if (isNil) {
     // dont add it do the DOM if its nil
     return
   }
 
-  const node =
-    val instanceof HTMLElement
-      ? val
-      : document.createTextNode(val?.toString() ?? val)
+  const node = createNode(val)
 
   if (currentNode) {
     // Call the existing child node's teardown logic before we replace it with a new element
@@ -166,14 +182,26 @@ function appendOrReplaceChild(
   }
 }
 
+function createNode(val: NonNullableChildBaseExpression): Node {
+  return val instanceof HTMLElement
+    ? val
+    : document.createTextNode(val?.toString() ?? val)
+}
+
 function isChildExpressionOrObservable(
   val: AttributeRecord | ChildExpression,
 ): val is ChildExpression {
   return (
-      /** Check for all types in {@link Primitive}, except for null and undefined */
-      ['number', 'bigint', 'boolean', 'string'].includes(typeof val) ||
-      val instanceof HTMLElement ||
-      Array.isArray(val) ||
-      isObservable(val) // AttributeRecords themselves cannot be observables, only AttributeValues can
+    /** Check for all types in {@link Primitive}, except for null and undefined */
+    ['number', 'bigint', 'boolean', 'string'].includes(typeof val) ||
+    val instanceof HTMLElement ||
+    Array.isArray(val) ||
+    isObservable(val) // AttributeRecords themselves cannot be observables, only AttributeValues can
   )
+}
+
+function removeChildNode(ref: HTMLElement, node: Node) {
+  // @ts-expect-error who knows if the node has a teardown func, but we don't care if it doesn't, we just want to remove it
+  node._teardown?.()
+  ref.removeChild(node)
 }

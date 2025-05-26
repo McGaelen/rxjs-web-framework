@@ -15,7 +15,9 @@ By minimizing the amount of constructs you have to learn, it makes it easier to 
 - [x] make the syntax not look like shit
 - [x] conditional rendering
 - [x] derived state
-- [ ] for loops
+- [x] for loops
+- [ ] keyed for loops
+- [ ] nested derives/for loops (which would cause infinitely higher-order observables...)
 - [ ] component children (maybe with slots too?) should probably look the same as normal elements
   - this probably already works the same as element functions but hasn't been tested
 - [ ] async/promises/using fetch

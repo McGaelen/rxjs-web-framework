@@ -1,4 +1,4 @@
-import {$, button, div, h1, input, li, state$, ul} from './lib'
+import { $, button, div, each$, h1, input, li, state$, ul } from './lib'
 
 export function TodoList() {
   const description$ = state$('')
@@ -33,22 +33,37 @@ export function TodoList() {
 
   // TODO: dom elements aren't removed when removed from the array
   return div(
-      h1('Todo list'),
-      input({ value: description$, onkeyup: setDescription }),
-      button({ onclick: addTodo }, 'Add todo'),
-      ul(
-          // staticArray.map(fruit => div(fruit)),
-          // ['hello world ', description$],
-          // $`some text in a $ statement`,
-          todos$.map((val, idx) =>
-              li(
-                  { style: 'display: flex; gap: 5px;'},
-                  val.description,
-                  button({ onclick: () => removeTodo(idx) },
-                      'remove'
-                  ),
-              ),
-          ),
+    h1('Todo list'),
+    input({ value: description$, onkeyup: setDescription }),
+    button({ onclick: addTodo }, 'Add todo'),
+    ul(
+      { style: 'width: 200px;' },
+      // staticArray.map(fruit => div(fruit)),
+      // ['hello world ', description$],
+      // $`some text in a $ statement`,
+      each$(todos$, (todo, idx) =>
+        li(
+          { style: 'display: flex; justify-content: space-between; gap: 5px;' },
+          todo.description,
+          button({ onclick: () => removeTodo(idx) }, 'remove'),
+        ),
       ),
+
+      // TODO: this should work too, but it doesnt!!!!!!
+      // todos$.derive((todos) =>
+      //   todos.length === 0
+      //     ? 'No todos!'
+      //     : each$(todos$, (todo, idx) =>
+      //         li(
+      //           {
+      //             style:
+      //               'display: flex; justify-content: space-between; gap: 5px;',
+      //           },
+      //           todo.description,
+      //           button({ onclick: () => removeTodo(idx) }, 'remove'),
+      //         ),
+      //       ),
+      // ),
+    ),
   )
 }

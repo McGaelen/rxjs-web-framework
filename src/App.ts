@@ -10,7 +10,7 @@ import {
 } from './lib'
 import { MyButton } from './MyButton'
 import { Observable } from 'rxjs'
-import {TodoList} from "./TodoList";
+import { TodoList } from './TodoList'
 
 export function App() {
   const count$ = state$(0)
@@ -68,6 +68,6 @@ export function App() {
       MyButton({ buttonText$ }),
     ),
 
-    TodoList()
+    TodoList(),
   )
 }
