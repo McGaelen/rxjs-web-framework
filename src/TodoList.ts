@@ -31,7 +31,6 @@ export function TodoList() {
     ])
   }
 
-  // TODO: dom elements aren't removed when removed from the array
   return div(
     h1('Todo list'),
     input({ value: description$, onkeyup: setDescription }),

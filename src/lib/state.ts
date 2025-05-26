@@ -32,10 +32,26 @@ export function derive$<NewType>(
 }
 
 export function each$<ArrayType, NewType>(
-  arrayState: State<Array<ArrayType>>,
+  arrayState$: State<Array<ArrayType>>,
   eachFn: (val: ArrayType, index: number, array: Array<ArrayType>) => NewType,
 ): Observable<Array<NewType>> {
-  return arrayState.derive((currentVal) => currentVal.map(eachFn))
+  const valueMap = new Map<number | bigint | string, NewType>()
+  return arrayState$.derive((currentArray) => {
+    const values = currentArray.map(eachFn)
+
+    values.forEach((value, idx) => {
+      let key: number | bigint | string = idx
+      if (value instanceof HTMLElement && value.hasAttribute('data-key')) {
+        key = value.getAttribute('data-key')!
+      }
+      if (!valueMap.has(key) || valueMap.get(key) !== value) {
+        valueMap.set(key, value)
+      }
+      // How do we know which keys have been removed?
+      // How do we know which keys have been re-ordered?
+      //
+    })
+  })
 }
 
 // See https://github.com/microsoft/TypeScript/issues/37663 on why `typeof x === 'function'` won't narrow x to a callable
