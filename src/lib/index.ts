@@ -18,6 +18,7 @@ export type AttributeValue =
   | Observable<AttributeBaseExpression>
 export type AttributeRecord = Record<string, AttributeValue>
 
+export type ChildKey = number | bigint | string
 export type ChildBaseExpression = Primitive | HTMLElement
 export type ChildExpression =
   // A static, non-reactive value

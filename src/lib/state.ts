@@ -1,4 +1,5 @@
 import { BehaviorSubject, combineLatest, map, Observable } from 'rxjs'
+import { ChildKey } from './index'
 
 export class State<T> extends BehaviorSubject<T> {
   constructor(initialVal: T) {
@@ -32,10 +33,28 @@ export function derive$<NewType>(
 }
 
 export function each$<ArrayType, NewType>(
-  arrayState$: State<Array<ArrayType>>,
+  array$: State<Array<ArrayType>>,
   eachFn: (val: ArrayType, index: number, array: Array<ArrayType>) => NewType,
 ): Observable<Array<NewType>> {
- return arrayState$.derive$((currentArray) => currentArray.map(eachFn))
+  return array$.derive$((array) => array.map(eachFn))
+}
+
+export function map$<ArrayType, NewType>(
+  array$: State<Array<ArrayType>>,
+  eachFn: (
+    val: ArrayType,
+    index: number,
+    array: Array<ArrayType>,
+  ) => { key: ChildKey; value: NewType },
+): Observable<Map<`${ChildKey}~${number}`, NewType>> {
+  return each$(array$, eachFn).pipe(
+    map((array) =>
+      array.reduce(
+        (map, value, idx) => map.set(`${value.key}~${idx}`, value.value),
+        new Map(),
+      ),
+    ),
+  )
 }
 
 // See https://github.com/microsoft/TypeScript/issues/37663 on why `typeof x === 'function'` won't narrow x to a callable

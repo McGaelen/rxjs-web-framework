@@ -1,4 +1,4 @@
-import { button, div, each$, h1, input, li, state$, ul } from './lib'
+import {button, div, each$, h1, input, li, map$, state$, ul} from './lib'
 
 export function TodoList() {
   const description$ = state$('')
@@ -25,7 +25,7 @@ export function TodoList() {
   }
 
   function addTodoToTop() {
-    todos$.set$(todos => [
+    todos$.set$((todos) => [
       {
         id: todos.length,
         description: description$.value,
@@ -52,12 +52,14 @@ export function TodoList() {
       // staticArray.map(fruit => div(fruit)),
       // ['hello world ', description$],
       // $`some text in a $ statement`,
-      each$(todos$, (todo, idx) =>
-        li(
-          { style: 'display: flex; justify-content: space-between; gap: 5px;' },
-          todo.description,
-          button({ onclick: () => removeTodo(idx) }, 'remove'),
-        ),
+      map$(todos$, (todo, idx) => ({
+        key: todo.id,
+        value: li(
+            { style: 'display: flex; justify-content: space-between; gap: 5px;' },
+            todo.description,
+            button({ onclick: () => removeTodo(idx) }, 'remove'),
+          ),
+        })
       ),
 
       // TODO: this should work too, but it doesnt!!!!!!
