@@ -46,11 +46,11 @@ export function map$<ArrayType, NewType>(
     index: number,
     array: Array<ArrayType>,
   ) => { key: ChildKey; value: NewType },
-): Observable<Map<`${ChildKey}~${number}`, NewType>> {
+): Observable<Map<ChildKey, NewType>> {
   return each$(array$, eachFn).pipe(
     map((array) =>
       array.reduce(
-        (map, value, idx) => map.set(`${value.key}~${idx}`, value.value),
+        (map, {key, value}) => map.set(key, value),
         new Map(),
       ),
     ),

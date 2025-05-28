@@ -45,4 +45,4 @@ By minimizing the amount of constructs you have to learn, it makes it easier to 
      - During these operations, we will keep track of what keys are currently in use in the new array separately. After the new array has been iterated, any keys from the parent record that don't exist in this array will be removed from the record and the DOM.
    - PROBLEM: this method means that adding/removing elements in the middle of the array will have a cascading effect on the rest of the elements in the list. If adding/removing an element at the bottom, this is faster. If adding/removing an element at the top, it costs the same as re-rendering the entire list.
 
-(consider making a map$ function in state.ts that creates a Map, which might actually make this algorithm easier)
+(consider making a map$ function in state.ts that creates a Map, which might actually make this algorithm easier. Maps will remember the order in which keys were inserted, so that's not an issue. We can probably just implement the above algorithm with maps instead.)
