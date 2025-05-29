@@ -32,6 +32,7 @@ export type ChildExpression =
       | ChildBaseExpression
       // A reactive Array where changes cause the whole array to be re-built
       | Array<ChildBaseExpression>
+      | Map<ChildKey, ChildBaseExpression>
     >
 
 export type HTMLElementWithTeardown<Element extends HTMLElement = HTMLElement> =

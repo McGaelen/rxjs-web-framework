@@ -39,15 +39,17 @@ export function each$<ArrayType, NewType>(
   return array$.derive$((array) => array.map(eachFn))
 }
 
+type MapFn<ArrayType, NewType> = (
+  val: ArrayType,
+  index: number,
+  array: Array<ArrayType>,
+) => { key: ChildKey; value: NewType }
+
 export function map$<ArrayType, NewType>(
   array$: State<Array<ArrayType>>,
-  eachFn: (
-    val: ArrayType,
-    index: number,
-    array: Array<ArrayType>,
-  ) => { key: ChildKey; value: NewType },
+  mapFn: MapFn<ArrayType, NewType>,
 ): Observable<Map<ChildKey, NewType>> {
-  return each$(array$, eachFn).pipe(
+  return each$(array$, mapFn).pipe(
     map((array) =>
       array.reduce(
         (map, {key, value}) => map.set(key, value),

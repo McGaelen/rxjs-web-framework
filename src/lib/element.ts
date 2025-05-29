@@ -4,22 +4,23 @@ import {
   AttributeBaseExpression,
   AttributeRecord,
   ChildBaseExpression,
-  ChildExpression,
+  ChildExpression, ChildKey,
   HTMLElementWithTeardown,
 } from './index'
 import { isObservable } from './utils'
 import { isNil, range } from 'lodash-es'
 
-type NonNullableChildBaseExpression = Exclude<
+type _NonNullableChildBaseExpression = Exclude<
   ChildBaseExpression,
   null | undefined
 >
+
+type _InternalChildMapKey = `${ChildKey}~${number}`
 
 export function div(
   attributes?: AttributeRecord | ChildExpression,
   ...children: ChildExpression[]
 ): HTMLDivElement {
-  console.log({ attributes, children })
   return createElement('div', attributes, ...children)
 }
 
@@ -83,17 +84,22 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
     }
   }
 
-  // Right now we are taking an array and mapping each entry to a map.
-  // But what if instead of trying to make that work, we just have the user specify a Map themselves?
-  // (and we give them a convenient way to do it? maybe the map function should actually make a map?)
-  // Basically, it should be the responsibility of state.ts to only fire for values that were updated, instead of createElement trying to figure that out.
   if (children) {
     children.flat(1).forEach((childExpr, idx) => {
       // handle reactive values
       if (isObservable(childExpr)) {
-        let lastChildCount = 0 // save the prevous len
+
+        // if it's an array, save the previous length so we know how many elements to potentially prune
+        let lastChildCount = 0
+        // if it's a map, we keep a constant record of which nodes are currently in the DOM,
+        // with a unique key of the user-provided key plus the index in the list.
+        // That means the key will change if a new element is swapped into place, or if an element is repositioned to a new index.
+        let renderedChildren: Map<_InternalChildMapKey, Node> | null = null
+
         childExpr.subscribe((expr) => {
+
           if (Array.isArray(expr)) {
+
             let nils = 0
             expr.forEach((innerChild, innerIdx) => {
               if (isNil(innerChild)) {
@@ -109,10 +115,50 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
               )
             }
             lastChildCount = expr.length
+
+          } else if (expr instanceof Map) {
+
+            if (!renderedChildren) {
+              renderedChildren = new Map()
+            }
+
+            let usedKeys: ChildKey[] = []
+            expr.entries().forEach(([key, value], innerIdx) => {
+
+
+              const keyWithIndex: _InternalChildMapKey = `${key}~${innerIdx}`
+              if (!isNil(value)) {
+                if (!renderedChildren!.has(keyWithIndex)) {
+                  renderedChildren!.set(keyWithIndex, appendOrReplaceChild(ref, innerIdx + idx, value))
+                }
+                usedKeys.push(keyWithIndex)
+              }
+            })
+
+            renderedChildren.entries().forEach(([key, node]) => {
+              if (!usedKeys.includes(key)) {
+                if (ref.contains(node)) {
+                  // the node may not always be a child if it was replaced by appendOrReplaceChild.
+                  // If it is a trailing node (i.e., the list of children got shorter, so it wasn't replaced),
+                  // then we need to remove it from the DOM.
+                  removeChildNode(ref, node)
+                }
+                renderedChildren!.delete(key)
+              }
+            })
+
           } else if (!isNil(expr)) {
+
             appendOrReplaceChild(ref, idx, expr)
+
+          } else {
+            // Can't just ignore nil expressions here, since they could become nil at a later point,
+            // we will need to remove any that do end up becoming nil.
+            removeChildAtIdx(ref, idx)
           }
         })
+
+
       } else if (!isNil(childExpr)) {
         // handle static values
         appendOrReplaceChild(ref, idx, childExpr)
@@ -157,32 +203,24 @@ function addOrReplaceAttribute(
 function appendOrReplaceChild(
   ref: HTMLElement,
   idx: number,
-  val: NonNullableChildBaseExpression,
-) {
-  const isNil = val === null || val === undefined
-  const currentNode = ref.childNodes[idx] as HTMLElementWithTeardown
-
-  if (isNil && currentNode) {
-    // if its nil and there is already a node at this idx, we need to remove it
-    removeChildNode(ref, currentNode)
-    return
-  } else if (isNil) {
-    // dont add it do the DOM if its nil
-    return
-  }
-
-  const node = createNode(val)
+  val: _NonNullableChildBaseExpression,
+): Node {
+  const currentNode = ref.childNodes[idx]
+  const newNode = createNode(val)
 
   if (currentNode) {
     // Call the existing child node's teardown logic before we replace it with a new element
+    // @ts-expect-error
     currentNode._teardown?.()
-    ref.replaceChild(node, currentNode)
+    ref.replaceChild(newNode, currentNode)
   } else {
-    ref.appendChild(node)
+    ref.appendChild(newNode)
   }
+
+  return newNode
 }
 
-function createNode(val: NonNullableChildBaseExpression): Node {
+function createNode(val: _NonNullableChildBaseExpression): Node {
   return val instanceof HTMLElement
     ? val
     : document.createTextNode(val?.toString() ?? val)
@@ -198,6 +236,12 @@ function isChildExpressionOrObservable(
     Array.isArray(val) ||
     isObservable(val) // AttributeRecords themselves cannot be observables, only AttributeValues can
   )
+}
+
+function removeChildAtIdx(ref: HTMLElement, idx: number) {
+  if (ref.childNodes[idx]) {
+    removeChildNode(ref, ref.childNodes[idx])
+  }
 }
 
 function removeChildNode(ref: HTMLElement, node: Node) {

@@ -5,6 +5,7 @@ export function TodoList() {
   const todos$ = state$([
     { id: 0, description: 'buy milk', done: false },
     { id: 1, description: 'buy eggs', done: true },
+    { id: 2, description: 'buy bread', done: false}
   ])
 
   const staticArray = ['apple', 'banana', 'cherry']
@@ -35,12 +36,17 @@ export function TodoList() {
     ])
   }
 
-  function removeTodo(index: number) {
-    todos$.set$((todos) => [
-      ...todos.slice(undefined, index),
-      ...todos.slice(index + 1),
-    ])
+  function removeTodo(id: number) {
+    todos$.set$((todos) => {
+      const index = todos.findIndex(todo => todo.id === id)
+      return [
+        ...todos.slice(undefined, index),
+        ...todos.slice(index + 1),
+      ]
+    })
   }
+
+  // todos$.subscribe(console.log)
 
   return div(
     h1('Todo list'),
@@ -52,15 +58,22 @@ export function TodoList() {
       // staticArray.map(fruit => div(fruit)),
       // ['hello world ', description$],
       // $`some text in a $ statement`,
-      map$(todos$, (todo, idx) => ({
+      map$(todos$, (todo) => ({
         key: todo.id,
         value: li(
             { style: 'display: flex; justify-content: space-between; gap: 5px;' },
             todo.description,
-            button({ onclick: () => removeTodo(idx) }, 'remove'),
+            button({ onclick: () => removeTodo(todo.id) }, 'remove'),
           ),
         })
       ),
+
+        // each$(todos$, (todo) => li(
+        //           { style: 'display: flex; justify-content: space-between; gap: 5px;' },
+        //           todo.description,
+        //           button({ onclick: () => removeTodo(todo.id) }, 'remove'),
+        //       )
+        // ),
 
       // TODO: this should work too, but it doesnt!!!!!!
       // todos$.derive((todos) =>
