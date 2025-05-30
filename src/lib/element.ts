@@ -15,8 +15,6 @@ type _NonNullableChildBaseExpression = Exclude<
   null | undefined
 >
 
-type _InternalChildMapKey = `${ChildKey}~${number}`
-
 export function div(
   attributes?: AttributeRecord | ChildExpression,
   ...children: ChildExpression[]
@@ -92,9 +90,9 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
         // if it's an array, save the previous length so we know how many elements to potentially prune
         let lastChildCount = 0
         // if it's a map, we keep a constant record of which nodes are currently in the DOM,
-        // with a unique key of the user-provided key plus the index in the list.
+        // with a unique key of the user-provided\ key plus the index in the list.
         // That means the key will change if a new element is swapped into place, or if an element is repositioned to a new index.
-        let renderedChildren: Map<_InternalChildMapKey, Node> | null = null
+        let renderedChildren: Map<ChildKey, Node> | null = null
 
         childExpr.subscribe((expr) => {
 
@@ -124,15 +122,26 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
 
             let usedKeys: ChildKey[] = []
             expr.entries().forEach(([key, value], innerIdx) => {
+              const parentOffset = innerIdx + idx
 
-
-              const keyWithIndex: _InternalChildMapKey = `${key}~${innerIdx}`
               if (!isNil(value)) {
-                if (!renderedChildren!.has(keyWithIndex)) {
-                  renderedChildren!.set(keyWithIndex, appendOrReplaceChild(ref, innerIdx + idx, value))
+                if (!renderedChildren!.has(key)) {
+                  console.log('creating new child: ', {key, parentOffset, value})
+                  renderedChildren!.set(key, appendOrReplaceChild(ref, parentOffset, value))
+                } else {
+                  const node = renderedChildren!.get(key)!
+                  const nodeIndex = Array.from(ref.childNodes).findIndex(pNode => pNode === node)
+                  console.log('map already has this node: ', {key, parentOffset, value, node})
+                  if (nodeIndex !== parentOffset) {
+                    console.log('moving this node to a new index: ', {key, parentOffset, nodeIndex, value, node})
+                    // removeChildNode(ref, childValue)
+                    // insertBefore will automatically remove the node from its original location if it was already in the DOM
+                    ref.insertBefore(node, ref.childNodes[parentOffset])
+                  }
                 }
-                usedKeys.push(keyWithIndex)
+                usedKeys.push(key)
               }
+
             })
 
             renderedChildren.entries().forEach(([key, node]) => {
