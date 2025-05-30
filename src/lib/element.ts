@@ -92,7 +92,7 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
         // if it's a map, we keep a constant record of which nodes are currently in the DOM,
         // with a unique key of the user-provided\ key plus the index in the list.
         // That means the key will change if a new element is swapped into place, or if an element is repositioned to a new index.
-        let renderedChildren: Map<ChildKey, Node> | null = null
+        // let renderedChildren: Map<ChildKey, Node> | null = null
 
         childExpr.subscribe((expr) => {
 
@@ -116,43 +116,44 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
 
           } else if (expr instanceof Map) {
 
-            if (!renderedChildren) {
-              renderedChildren = new Map()
-            }
+            const exprEntries = expr.entries().toArray()
+            // const renderedEntries = renderedChildren.entries().toArray()
+            const max = Math.max(ref.childNodes.length, expr.size)
+            range(max).forEach((loopIdx) => {
+              const parentOffset = idx + loopIdx
 
-            let usedKeys: ChildKey[] = []
-            expr.entries().forEach(([key, value], innerIdx) => {
-              const parentOffset = innerIdx + idx
+              const exprEntry = exprEntries.at(parentOffset)
+              const node = ref.childNodes[parentOffset]
 
-              if (!isNil(value)) {
-                if (!renderedChildren!.has(key)) {
-                  console.log('creating new child: ', {key, parentOffset, value})
-                  renderedChildren!.set(key, appendOrReplaceChild(ref, parentOffset, value))
-                } else {
-                  const node = renderedChildren!.get(key)!
-                  const nodeIndex = Array.from(ref.childNodes).findIndex(pNode => pNode === node)
-                  console.log('map already has this node: ', {key, parentOffset, value, node})
-                  if (nodeIndex !== parentOffset) {
-                    console.log('moving this node to a new index: ', {key, parentOffset, nodeIndex, value, node})
-                    // removeChildNode(ref, childValue)
-                    // insertBefore will automatically remove the node from its original location if it was already in the DOM
-                    ref.insertBefore(node, ref.childNodes[parentOffset])
+              /** Save the key on the node itself, so we don't have a middle-man Map. */
+              if (!exprEntry) {
+                // An element was removed from the bottom of the list.
+                // There is no entry in the source at this index, so remove our node at the index.
+                removeChildNode(ref, node)
+              } else if (!node) {
+                // An element was added to the bottom of the list.
+                // We don't have a node at this index, so create one.
+                appendOrReplaceChild(ref, parentOffset, exprEntry[1]!)
+              } else {
+                const [exprKey, exprValue] = exprEntry
+
+                // We now know both maps have an entry at this index.
+                // Now we need to know if the value changed at the index by looking at the key.
+                if (exprKey !== node._key) {
+                  // If the keys are different, that can mean a couple things:
+                  // 1. The key was moved to a different location.
+                  // 2. The key was removed from the middle or top of the list.
+                  // 3. The key was added to the middle or top of the list
+                  if (!ref.childNodes.values().find(pNode => pNode._key === exprKey)) {
+                    // We know it was added because we currently don't have it in our record.
+                    // Add it here.
+                  } else if (expr.has(node._key)) {
+                    // We know it was moved because the source still contains it,
+                    // so grab its new index and do insertBefore()
+                  } else {
+                    // The element was deleted from the source, so remove it.
                   }
                 }
-                usedKeys.push(key)
-              }
-
-            })
-
-            renderedChildren.entries().forEach(([key, node]) => {
-              if (!usedKeys.includes(key)) {
-                if (ref.contains(node)) {
-                  // the node may not always be a child if it was replaced by appendOrReplaceChild.
-                  // If it is a trailing node (i.e., the list of children got shorter, so it wasn't replaced),
-                  // then we need to remove it from the DOM.
-                  removeChildNode(ref, node)
-                }
-                renderedChildren!.delete(key)
               }
             })
 
