@@ -1,14 +1,14 @@
-import { registry } from './registry'
+import { registry } from '../registry'
 import { Observable } from 'rxjs'
 import {
   AttributeBaseExpression,
   AttributeRecord,
   ChildBaseExpression,
   ChildExpression,
-  ChildKey,
+  ChildNodeWithKey,
   HTMLElementWithTeardown,
-} from './index'
-import { isObservable } from './utils'
+} from './types'
+import { isObservable } from '../utils'
 import { isNil, range } from 'lodash-es'
 
 type _NonNullableChildBaseExpression = Exclude<
@@ -21,6 +21,13 @@ export function div(
   ...children: ChildExpression[]
 ): HTMLDivElement {
   return createElement('div', attributes, ...children)
+}
+
+export function span(
+  attributes?: AttributeRecord | ChildExpression,
+  ...children: ChildExpression[]
+): HTMLSpanElement {
+  return createElement('span', attributes, ...children)
 }
 
 export function button(
@@ -89,10 +96,6 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
       if (isObservable(childExpr)) {
         // if it's an array, save the previous length so we know how many elements to potentially prune
         let lastChildCount = 0
-        // if it's a map, we keep a constant record of which nodes are currently in the DOM,
-        // with a unique key of the user-provided\ key plus the index in the list.
-        // That means the key will change if a new element is swapped into place, or if an element is repositioned to a new index.
-        // let renderedChildren: Map<ChildKey, Node> | null = null
 
         childExpr.subscribe((source) => {
           if (Array.isArray(source)) {
@@ -113,18 +116,17 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
             lastChildCount = source.length
           } else if (source instanceof Map) {
             const exprEntries = source.entries().toArray()
-            // const renderedEntries = renderedChildren.entries().toArray()
+
             const max = Math.max(ref.childNodes.length, source.size)
 
-            console.log({max, source})
             range(max).forEach((loopIdx) => {
-              console.log('looping')
+              // console.log('looping')
               const parentOffset = idx + loopIdx
 
               const exprEntry = exprEntries.at(parentOffset)
               const sourceKey = exprEntry?.[0]
               const sourceValue = exprEntry?.[1]
-              const node = ref.childNodes[parentOffset]
+              const node = ref.childNodes[parentOffset] as ChildNodeWithKey
 
               /**
                * Scenarios (must take into account both index and key)
@@ -143,54 +145,55 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
                *    - noop
                */
 
-              const info = {
-                loopIdx,
-                sourceKey,
-                sourceValue,
-                node,
-                nodeKey: node?._key,
-              }
+              // const info = {
+              //   loopIdx,
+              //   sourceKey,
+              //   sourceValue,
+              //   node,
+              //   nodeKey: node?._key,
+              // }
 
               const sourceExists = !isNil(sourceKey) && !isNil(sourceValue)
-              if (sourceExists && node && sourceKey === node._key) {
-                  // noop
-                  console.log('correct keys - noop', info)
-
-                } else if (sourceExists && !node) {
+              /*if (sourceExists && node && sourceKey === node._key) {
+                // noop
+                // console.log('correct keys - noop', info)
+              } else */ if (sourceExists && !node) {
                 const newNode = appendOrReplaceChild(
                   ref,
                   parentOffset,
                   sourceValue,
-                )
+                ) as ChildNodeWithKey
                 newNode._key = sourceKey
-                console.log('missing node - creating', info)
+                // console.log('missing node - creating', info)
               } else if (sourceExists && node && sourceKey !== node._key) {
                 if (!source.has(node._key)) {
                   removeChildNode(ref, node)
-                  console.log(
-                    'key mismatch, and node here is not in the source - deleting',
-                    info,
-                  )
+                  // console.log(
+                  //   'key mismatch, and node here is not in the source - deleting',
+                  //   info,
+                  // )
                 }
 
                 // Check if there's already a ChildNode for this key.
                 let existingNode: Node | ChildNode | undefined = ref.childNodes
                   .values()
-                  .find((pNode) => pNode._key === sourceKey)
+                  .find(
+                    (pNode) => (pNode as ChildNodeWithKey)._key === sourceKey,
+                  )
                 if (existingNode) {
                   ref.insertBefore(existingNode, ref.childNodes[parentOffset])
-                  console.log(
-                    'existing node for this key is in dom - moving to this index',
-                    info,
-                  )
+                  // console.log(
+                  //   'existing node for this key is in dom - moving to this index',
+                  //   info,
+                  // )
                 } else {
-                  const newNode = createNode(sourceValue)
+                  const newNode = createNode(sourceValue) as ChildNodeWithKey
                   newNode._key = sourceKey
                   ref.insertBefore(newNode, ref.childNodes[parentOffset])
-                  console.log(
-                    'no existing node found for this key - creating new node',
-                    info,
-                  )
+                  // console.log(
+                  //   'no existing node found for this key - creating new node',
+                  //   info,
+                  // )
                 }
               } else if (
                 !sourceKey &&
@@ -199,13 +202,16 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
                 !source.has(node._key)
               ) {
                 removeChildNode(ref, node)
-                console.log(
-                  'node exists here but is not in source - deleting',
-                  info,
-                )
-              }  else {
-                  console.log('missed scenario, or list was shortened in place', info)
-                }
+                // console.log(
+                //   'node exists here but is not in source - deleting',
+                //   info,
+                // )
+              } /*else {
+                // console.log(
+                //   'missed scenario, or list was shortened in place',
+                //   info,
+                // )
+              }*/
             })
           } else if (!isNil(source)) {
             appendOrReplaceChild(ref, idx, source)

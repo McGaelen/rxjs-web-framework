@@ -19,9 +19,8 @@ By minimizing the amount of constructs you have to learn, it makes it easier to 
 - [ ] keyed for loops
   - [x] make it actually fucking work
   - [ ] clean up the code
-  - [ ] rename map$ back to each$, and make it emit an array again, since we treat the map as an array when looping through it anyways, and remove the first array case in the subscription handler
-  - [ ] if no key was provided or returned from each$, use the array index, which should give us similar behavior to svelte's unkeyed eaches
-  - [ ] allow providing a property string to use as the key instead of returning the key in an object. use lodash's get()
+  - [ ] make arrays passed as children use the key-based system for maps, but with the array index
+  - [x] allow providing a property string to use as the key instead of returning the key in an object. use lodash's get()
   - [ ] figure out what to do about the array index - if the values returned for each loop iteration use the index, it doesn't change when the array changes (it's not reactive, so it will be out of date if the element moves positions)
 - [ ] nested derives/for loops (which would cause infinitely higher-order observables...)
 - [ ] component children (maybe with slots too?) should probably look the same as normal elements

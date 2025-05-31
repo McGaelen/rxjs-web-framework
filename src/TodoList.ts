@@ -1,11 +1,11 @@
-import { button, div, each$, h1, input, li, map$, state$, ul } from './lib'
+import { $, button, div, h1, input, li, map$, span, state$, ul } from './lib'
 
 export function TodoList() {
   const description$ = state$('')
   const todos$ = state$([
-    { id: 0, description: 'buy milk', done: false },
-    { id: 1, description: 'buy eggs', done: true },
-    { id: 2, description: 'buy bread', done: false },
+    { id: 0, description: 'buy milk', done: state$(false) },
+    { id: 1, description: 'buy eggs', done: state$(true) },
+    { id: 2, description: 'buy bread', done: state$(false) },
   ])
 
   const staticArray = ['apple', 'banana', 'cherry']
@@ -27,7 +27,7 @@ export function TodoList() {
       {
         id: getNewId(),
         description: description$.value,
-        done: false,
+        done: state$(false),
       },
     ])
   }
@@ -37,7 +37,7 @@ export function TodoList() {
       {
         id: getNewId(),
         description: description$.value,
-        done: false,
+        done: state$(false),
       },
       ...todos,
     ])
@@ -58,41 +58,26 @@ export function TodoList() {
     button({ onclick: addTodo }, 'Add todo'),
     button({ onclick: addTodoToTop }, 'Add todo to Top'),
     ul(
-      { style: 'width: 200px;' },
-      // staticArray.map(fruit => div(fruit)),
-      // ['hello world ', description$],
-      // $`some text in a $ statement`,
-      map$(todos$, (todo) => ({
-        key: todo.id,
-        value: li(
+      { style: 'width: 400px;' },
+      map$(todos$, 'id', (todo) =>
+        li(
           { style: 'display: flex; justify-content: space-between; gap: 5px;' },
+          span(
+            { style: 'display: flex; gap: 5px;' },
+            button(
+              { onclick: () => todo.done.set$((isDone) => !isDone) },
+              'toggle done',
+            ),
+            todo.done.derive$((isDone) => span(isDone ? 'done!' : 'not done')),
+          ),
           todo.description,
           button({ onclick: () => removeTodo(todo.id) }, 'remove'),
         ),
-      })),
-
-      // each$(todos$, (todo) => li(
-      //           { style: 'display: flex; justify-content: space-between; gap: 5px;' },
-      //           todo.description,
-      //           button({ onclick: () => removeTodo(todo.id) }, 'remove'),
-      //       )
-      // ),
-
-      // TODO: this should work too, but it doesnt!!!!!!
-      // todos$.derive((todos) =>
-      //   todos.length === 0
-      //     ? 'No todos!'
-      //     : each$(todos$, (todo, idx) =>
-      //         li(
-      //           {
-      //             style:
-      //               'display: flex; justify-content: space-between; gap: 5px;',
-      //           },
-      //           todo.description,
-      //           button({ onclick: () => removeTodo(idx) }, 'remove'),
-      //         ),
-      //       ),
-      // ),
+      ),
+      // TODO: fix having multiple other children along with an array not working
+      // staticArray.map(fruit => div(fruit)),
+      // ['hello world ', description$],
+      // $`some text in a $ statement`,
     ),
   )
 }
