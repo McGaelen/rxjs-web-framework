@@ -123,44 +123,49 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
               const parentOffset = idx + loopIdx
 
               const exprEntry = exprEntries.at(parentOffset)
+              const sourceKey = exprEntry?.[0]
+              const sourceValue = exprEntry?.[1]
               const node = ref.childNodes[parentOffset]
 
-              /** Save the key on the node itself, so we don't have a middle-man Map. */
-              if (!exprEntry) {
-                // An element was removed from the bottom of the list.
-                // There is no entry in the source at this index, so remove our node at the index.
-                removeChildNode(ref, node)
-              } else if (!node) {
-                // An element was added to the bottom of the list.
-                // We don't have a node at this index, so create one.
-                appendOrReplaceChild(ref, parentOffset, exprEntry[1]!)
-              } else {
-                const [exprKey, exprValue] = exprEntry
-
-                // We now know both maps have an entry at this index.
-                // Now we need to know if the value changed at the index by looking at the key.
-                if (exprKey !== node._key) {
-                  // If the keys are different, that can mean a couple things:
-                  // 1. The key was moved to a different location.
-                  // 2. The key was removed from the middle or top of the list.
-                  // 3. The key was added to the middle or top of the list
-                  if (!ref.childNodes.values().find(pNode => pNode._key === exprKey)) {
-                    // We know it was added because we currently don't have it in our record.
-                    // Add it here.
-                  } else if (expr.has(node._key)) {
-                    // We know it was moved because the source still contains it,
-                    // so grab its new index and do insertBefore()
-                  } else {
-                    // The element was deleted from the source, so remove it.
-                  }
+              // if (!exprEntry && !node) {
+              //   return // no work to do
+              // }
+              //
+              // if (!sourceKey && node) {
+              //   // An element was removed from the bottom of the list.
+              //   // There is no entry in the source at this index, so remove our child node at the index.
+              //   removeChildNode(ref, node)
+              // } else if (sourceKey && !node) {
+              //   // An element was added to the bottom of the list.
+              //   // We don't have a node at this index, so create one.
+              //   const newNode = appendOrReplaceChild(ref, parentOffset, exprEntry[1]!)
+              //   newNode._key = exprEntry[0]!
+              // } else if (sourceKey !== node._key) {
+                // The keys are different, which can mean one of three things:
+                // 1. The key was moved to a different location.
+                // 2. The key was removed from the middle or top of the list.
+                // 3. The key was added to the middle or top of the list
+                if (sourceKey && sourceValue && !ref.childNodes.values().find(pNode => pNode._key === sourceKey)) {
+                  // We know it was added because we currently don't have it in the dom.
+                  // Add it here. TODO: handle case when sourceValue is null.
+                  const newNode = appendOrReplaceChild(ref, parentOffset, sourceValue)
+                  newNode._key = sourceKey
+                } else if (node && !expr.has(node._key)) {
+                  removeChildNode(ref, node)
+                } /*else if (node && expr.has(node._key)) {
+                  // We know it was moved because the source still contains it,
+                  // so grab its new index and do insertBefore()
+                  ref.insertBefore(node, ref.childNodes[parentOffset])
+                }*/ else {
+                  ref.insertBefore(node, ref.childNodes[parentOffset])
+                  // The element was deleted from the source, so remove it.
+                  // removeChildNode(ref, node)
                 }
-              }
+              // }
             })
 
           } else if (!isNil(expr)) {
-
             appendOrReplaceChild(ref, idx, expr)
-
           } else {
             // Can't just ignore nil expressions here, since they could become nil at a later point,
             // we will need to remove any that do end up becoming nil.
