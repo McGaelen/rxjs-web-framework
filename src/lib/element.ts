@@ -145,21 +145,45 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
                 // 1. The key was moved to a different location.
                 // 2. The key was removed from the middle or top of the list.
                 // 3. The key was added to the middle or top of the list
+
+                // Scenarios (must take into account both index and key)
+                // 1. value exists in source, in dom, and the their keys match.
+
+                /**
+                 * Scenarios (must take into account both index and key)
+                 * 1. Value exists in source, in dom, and their keys match.
+                 *    - This means there is no work to be done, since the keys at this index are the same, it must be the same element.
+                 * 2. Value exists in source, but there is no dom element at this index.
+                 *    - Add the value to the dom.
+                 * 3. Value exists in source, and there is a dom element at this index, but their keys do not match.
+                 *    - Check the dom for an existing node with this key. If it exists, move it to this index. If it doesn't, create it.
+                 *    - Check if the existing dom element here exists in the source at all. If not, remove it. If it does, noop.
+                 * 4. Value doesn't exist in source at the index, but there is an element in the dom at this index whose key DOES exist in the source at a different index.
+                 *    -
+                 * 5. Value doesn't exist in source at the index, but there is an element in the dom at this index whose key DOES NOT exist in the source at all.
+                 *    -
+                 * 6. Value doesn't exist in the source at the index, and there is no element in the dom at this index.
+                 *    -
+                 */
+
                 if (sourceKey && sourceValue && !ref.childNodes.values().find(pNode => pNode._key === sourceKey)) {
+                  // it's in the source at this index, but not the dom.
                   // We know it was added because we currently don't have it in the dom.
                   // Add it here. TODO: handle case when sourceValue is null.
                   const newNode = appendOrReplaceChild(ref, parentOffset, sourceValue)
                   newNode._key = sourceKey
                 } else if (node && !expr.has(node._key)) {
+                  // there is an element in the dom at this index, but it's not in
                   removeChildNode(ref, node)
-                } /*else if (node && expr.has(node._key)) {
+                } else if (node && expr.has(node._key)) {
+                  // it's in the dom and the source
                   // We know it was moved because the source still contains it,
                   // so grab its new index and do insertBefore()
                   ref.insertBefore(node, ref.childNodes[parentOffset])
-                }*/ else {
+                } else {
                   ref.insertBefore(node, ref.childNodes[parentOffset])
                   // The element was deleted from the source, so remove it.
-                  // removeChildNode(ref, node)
+                  if (node) removeChildNode(ref, node)
                 }
               // }
             })
