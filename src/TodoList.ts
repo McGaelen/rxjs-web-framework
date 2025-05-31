@@ -1,11 +1,11 @@
-import {button, div, each$, h1, input, li, map$, state$, ul} from './lib'
+import { button, div, each$, h1, input, li, map$, state$, ul } from './lib'
 
 export function TodoList() {
   const description$ = state$('')
   const todos$ = state$([
     { id: 0, description: 'buy milk', done: false },
     { id: 1, description: 'buy eggs', done: true },
-    { id: 2, description: 'buy bread', done: false}
+    { id: 2, description: 'buy bread', done: false },
   ])
 
   const staticArray = ['apple', 'banana', 'cherry']
@@ -14,11 +14,18 @@ export function TodoList() {
     description$.set$((e.target as HTMLInputElement).value)
   }
 
+  let serial = 3
+
+  function getNewId() {
+    serial++
+    return serial
+  }
+
   function addTodo() {
     todos$.set$((todos) => [
       ...todos,
       {
-        id: todos.length,
+        id: getNewId(),
         description: description$.value,
         done: false,
       },
@@ -28,7 +35,7 @@ export function TodoList() {
   function addTodoToTop() {
     todos$.set$((todos) => [
       {
-        id: todos.length,
+        id: getNewId(),
         description: description$.value,
         done: false,
       },
@@ -38,15 +45,12 @@ export function TodoList() {
 
   function removeTodo(id: number) {
     todos$.set$((todos) => {
-      const index = todos.findIndex(todo => todo.id === id)
-      return [
-        ...todos.slice(undefined, index),
-        ...todos.slice(index + 1),
-      ]
+      const index = todos.findIndex((todo) => todo.id === id)
+      return [...todos.slice(undefined, index), ...todos.slice(index + 1)]
     })
   }
 
-  // todos$.subscribe(console.log)
+  todos$.subscribe(console.log)
 
   return div(
     h1('Todo list'),
@@ -61,19 +65,18 @@ export function TodoList() {
       map$(todos$, (todo) => ({
         key: todo.id,
         value: li(
-            { style: 'display: flex; justify-content: space-between; gap: 5px;' },
-            todo.description,
-            button({ onclick: () => removeTodo(todo.id) }, 'remove'),
-          ),
-        })
-      ),
+          { style: 'display: flex; justify-content: space-between; gap: 5px;' },
+          todo.description,
+          button({ onclick: () => removeTodo(todo.id) }, 'remove'),
+        ),
+      })),
 
-        // each$(todos$, (todo) => li(
-        //           { style: 'display: flex; justify-content: space-between; gap: 5px;' },
-        //           todo.description,
-        //           button({ onclick: () => removeTodo(todo.id) }, 'remove'),
-        //       )
-        // ),
+      // each$(todos$, (todo) => li(
+      //           { style: 'display: flex; justify-content: space-between; gap: 5px;' },
+      //           todo.description,
+      //           button({ onclick: () => removeTodo(todo.id) }, 'remove'),
+      //       )
+      // ),
 
       // TODO: this should work too, but it doesnt!!!!!!
       // todos$.derive((todos) =>

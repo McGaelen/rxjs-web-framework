@@ -4,7 +4,8 @@ import {
   AttributeBaseExpression,
   AttributeRecord,
   ChildBaseExpression,
-  ChildExpression, ChildKey,
+  ChildExpression,
+  ChildKey,
   HTMLElementWithTeardown,
 } from './index'
 import { isObservable } from './utils'
@@ -86,7 +87,6 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
     children.flat(1).forEach((childExpr, idx) => {
       // handle reactive values
       if (isObservable(childExpr)) {
-
         // if it's an array, save the previous length so we know how many elements to potentially prune
         let lastChildCount = 0
         // if it's a map, we keep a constant record of which nodes are currently in the DOM,
@@ -94,12 +94,10 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
         // That means the key will change if a new element is swapped into place, or if an element is repositioned to a new index.
         // let renderedChildren: Map<ChildKey, Node> | null = null
 
-        childExpr.subscribe((expr) => {
-
-          if (Array.isArray(expr)) {
-
+        childExpr.subscribe((source) => {
+          if (Array.isArray(source)) {
             let nils = 0
-            expr.forEach((innerChild, innerIdx) => {
+            source.forEach((innerChild, innerIdx) => {
               if (isNil(innerChild)) {
                 nils++
               } else {
@@ -107,19 +105,20 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
               }
             })
 
-            if (expr.length < lastChildCount) {
-              range(expr.length, lastChildCount).forEach((idx) =>
+            if (source.length < lastChildCount) {
+              range(source.length, lastChildCount).forEach((idx) =>
                 removeChildNode(ref, ref.childNodes[idx]),
               )
             }
-            lastChildCount = expr.length
-
-          } else if (expr instanceof Map) {
-
-            const exprEntries = expr.entries().toArray()
+            lastChildCount = source.length
+          } else if (source instanceof Map) {
+            const exprEntries = source.entries().toArray()
             // const renderedEntries = renderedChildren.entries().toArray()
-            const max = Math.max(ref.childNodes.length, expr.size)
+            const max = Math.max(ref.childNodes.length, source.size)
+
+            console.log({max, source})
             range(max).forEach((loopIdx) => {
+              console.log('looping')
               const parentOffset = idx + loopIdx
 
               const exprEntry = exprEntries.at(parentOffset)
@@ -127,77 +126,95 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
               const sourceValue = exprEntry?.[1]
               const node = ref.childNodes[parentOffset]
 
-              // if (!exprEntry && !node) {
-              //   return // no work to do
-              // }
-              //
-              // if (!sourceKey && node) {
-              //   // An element was removed from the bottom of the list.
-              //   // There is no entry in the source at this index, so remove our child node at the index.
-              //   removeChildNode(ref, node)
-              // } else if (sourceKey && !node) {
-              //   // An element was added to the bottom of the list.
-              //   // We don't have a node at this index, so create one.
-              //   const newNode = appendOrReplaceChild(ref, parentOffset, exprEntry[1]!)
-              //   newNode._key = exprEntry[0]!
-              // } else if (sourceKey !== node._key) {
-                // The keys are different, which can mean one of three things:
-                // 1. The key was moved to a different location.
-                // 2. The key was removed from the middle or top of the list.
-                // 3. The key was added to the middle or top of the list
+              /**
+               * Scenarios (must take into account both index and key)
+               * 1. Value exists in source, in dom, and their keys match.
+               *    - noop
+               * 2. Value exists in source, but there is no dom element at this index.
+               *    - Add the value to the dom.
+               * 3. Value exists in source, and there is a dom element at this index, but their keys do not match.
+               *    - Check if the existing dom element here exists in the source at all. If not, remove it. If it does, noop.
+               *    - Check the dom for an existing node with this key. If it exists, move it to this index. If it doesn't, create it.
+               * 4. Value doesn't exist in source at the index, but there is an element in the dom at this index whose key DOES exist in the source at a different index.
+               *    - already covered in 3
+               * 5. Value doesn't exist in source at the index, but there is an element in the dom at this index whose key DOES NOT exist in the source at all.
+               *    - already covered in 3
+               * 6. Value doesn't exist in the source at the index, and there is no element in the dom at this index.
+               *    - noop
+               */
 
-                // Scenarios (must take into account both index and key)
-                // 1. value exists in source, in dom, and the their keys match.
+              const info = {
+                loopIdx,
+                sourceKey,
+                sourceValue,
+                node,
+                nodeKey: node?._key,
+              }
 
-                /**
-                 * Scenarios (must take into account both index and key)
-                 * 1. Value exists in source, in dom, and their keys match.
-                 *    - This means there is no work to be done, since the keys at this index are the same, it must be the same element.
-                 * 2. Value exists in source, but there is no dom element at this index.
-                 *    - Add the value to the dom.
-                 * 3. Value exists in source, and there is a dom element at this index, but their keys do not match.
-                 *    - Check the dom for an existing node with this key. If it exists, move it to this index. If it doesn't, create it.
-                 *    - Check if the existing dom element here exists in the source at all. If not, remove it. If it does, noop.
-                 * 4. Value doesn't exist in source at the index, but there is an element in the dom at this index whose key DOES exist in the source at a different index.
-                 *    -
-                 * 5. Value doesn't exist in source at the index, but there is an element in the dom at this index whose key DOES NOT exist in the source at all.
-                 *    -
-                 * 6. Value doesn't exist in the source at the index, and there is no element in the dom at this index.
-                 *    -
-                 */
+              const sourceExists = !isNil(sourceKey) && !isNil(sourceValue)
+              if (sourceExists && node && sourceKey === node._key) {
+                  // noop
+                  console.log('correct keys - noop', info)
 
-                if (sourceKey && sourceValue && !ref.childNodes.values().find(pNode => pNode._key === sourceKey)) {
-                  // it's in the source at this index, but not the dom.
-                  // We know it was added because we currently don't have it in the dom.
-                  // Add it here. TODO: handle case when sourceValue is null.
-                  const newNode = appendOrReplaceChild(ref, parentOffset, sourceValue)
-                  newNode._key = sourceKey
-                } else if (node && !expr.has(node._key)) {
-                  // there is an element in the dom at this index, but it's not in
+                } else if (sourceExists && !node) {
+                const newNode = appendOrReplaceChild(
+                  ref,
+                  parentOffset,
+                  sourceValue,
+                )
+                newNode._key = sourceKey
+                console.log('missing node - creating', info)
+              } else if (sourceExists && node && sourceKey !== node._key) {
+                if (!source.has(node._key)) {
                   removeChildNode(ref, node)
-                } else if (node && expr.has(node._key)) {
-                  // it's in the dom and the source
-                  // We know it was moved because the source still contains it,
-                  // so grab its new index and do insertBefore()
-                  ref.insertBefore(node, ref.childNodes[parentOffset])
-                } else {
-                  ref.insertBefore(node, ref.childNodes[parentOffset])
-                  // The element was deleted from the source, so remove it.
-                  if (node) removeChildNode(ref, node)
+                  console.log(
+                    'key mismatch, and node here is not in the source - deleting',
+                    info,
+                  )
                 }
-              // }
-            })
 
-          } else if (!isNil(expr)) {
-            appendOrReplaceChild(ref, idx, expr)
+                // Check if there's already a ChildNode for this key.
+                let existingNode: Node | ChildNode | undefined = ref.childNodes
+                  .values()
+                  .find((pNode) => pNode._key === sourceKey)
+                if (existingNode) {
+                  ref.insertBefore(existingNode, ref.childNodes[parentOffset])
+                  console.log(
+                    'existing node for this key is in dom - moving to this index',
+                    info,
+                  )
+                } else {
+                  const newNode = createNode(sourceValue)
+                  newNode._key = sourceKey
+                  ref.insertBefore(newNode, ref.childNodes[parentOffset])
+                  console.log(
+                    'no existing node found for this key - creating new node',
+                    info,
+                  )
+                }
+              } else if (
+                !sourceKey &&
+                !sourceValue &&
+                node &&
+                !source.has(node._key)
+              ) {
+                removeChildNode(ref, node)
+                console.log(
+                  'node exists here but is not in source - deleting',
+                  info,
+                )
+              }  else {
+                  console.log('missed scenario, or list was shortened in place', info)
+                }
+            })
+          } else if (!isNil(source)) {
+            appendOrReplaceChild(ref, idx, source)
           } else {
             // Can't just ignore nil expressions here, since they could become nil at a later point,
             // we will need to remove any that do end up becoming nil.
             removeChildAtIdx(ref, idx)
           }
         })
-
-
       } else if (!isNil(childExpr)) {
         // handle static values
         appendOrReplaceChild(ref, idx, childExpr)
