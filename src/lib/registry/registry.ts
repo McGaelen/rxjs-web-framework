@@ -1,11 +1,5 @@
 import { isSubscription } from './utils'
-import { SubscriptionLike } from 'rxjs'
-
-export type SubscriptionOrEventListener =
-  | SubscriptionLike
-  | { ref: HTMLElement; eventProp: string }
-
-export type RegisterFn = (sub: SubscriptionOrEventListener) => void
+import {RegisterFn, SubscriptionOrEventListener} from "./types";
 
 export function registry(): { register: RegisterFn; destroy: VoidFunction } {
   const subs: SubscriptionOrEventListener[] = []

@@ -6,10 +6,8 @@ import {
   $,
   derive$,
   state$,
-  ChildExpression,
 } from './lib'
 import { MyButton } from './MyButton'
-import { Observable } from 'rxjs'
 import { TodoList } from './TodoList'
 
 export function App() {

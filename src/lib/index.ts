@@ -1,3 +1,3 @@
-export * from './element/element'
-export * from './state/state'
-export * from './registry'
+export * from './element'
+export * from './state'
+export * from './registry/registry'
