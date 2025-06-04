@@ -1,5 +1,5 @@
 import { isSubscription } from './utils'
-import {RegisterFn, SubscriptionOrEventListener} from "./types";
+import { RegisterFn, SubscriptionOrEventListener } from './types'
 
 export function registry(): { register: RegisterFn; destroy: VoidFunction } {
   const subs: SubscriptionOrEventListener[] = []

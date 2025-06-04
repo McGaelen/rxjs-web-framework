@@ -1,14 +1,14 @@
-import {AttributeBaseExpression, ChildBaseExpression} from "./types";
+import { AttributeBaseExpression, ChildBaseExpression } from './types'
 
 type _NonNullableChildBaseExpression = Exclude<
-    ChildBaseExpression,
-    null | undefined
+  ChildBaseExpression,
+  null | undefined
 >
 
 export function addOrReplaceAttribute(
-    ref: HTMLElement,
-    key: string,
-    value: AttributeBaseExpression,
+  ref: HTMLElement,
+  key: string,
+  value: AttributeBaseExpression,
 ) {
   if (typeof value === 'function') {
     // if its a function, try to add it as an event listener
@@ -19,11 +19,10 @@ export function addOrReplaceAttribute(
   }
 }
 
-
 export function appendOrReplaceChild(
-    ref: HTMLElement,
-    idx: number,
-    val: _NonNullableChildBaseExpression,
+  ref: HTMLElement,
+  idx: number,
+  val: _NonNullableChildBaseExpression,
 ): Node {
   const currentNode = ref.childNodes[idx]
   const newNode = createNode(val)
@@ -42,8 +41,8 @@ export function appendOrReplaceChild(
 
 export function createNode(val: _NonNullableChildBaseExpression): Node {
   return val instanceof HTMLElement
-      ? val
-      : document.createTextNode(val?.toString() ?? val)
+    ? val
+    : document.createTextNode(val?.toString() ?? val)
 }
 
 export function removeChildAtIdx(ref: HTMLElement, idx: number) {
