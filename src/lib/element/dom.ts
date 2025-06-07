@@ -1,9 +1,6 @@
-import { AttributeBaseExpression, ChildBaseExpression } from './types'
+import { AttributeBaseExpression, ChildValue } from './types'
 
-type _NonNullableChildBaseExpression = Exclude<
-  ChildBaseExpression,
-  null | undefined
->
+type _NonNullableChildBaseExpression = Exclude<ChildValue, null | undefined>
 
 export function addOrReplaceAttribute(
   ref: HTMLElement,

@@ -1,9 +1,9 @@
-import { AttributeRecord, ChildExpression } from './types'
+import { AttributeRecord, Child } from './types'
 import { Observable } from 'rxjs'
 
 export function isChildExpressionOrObservable(
-  val: AttributeRecord | ChildExpression,
-): val is ChildExpression {
+  val: AttributeRecord | Child,
+): val is Child {
   return (
     /** Check for all types in {@link Primitive}, except for null and undefined */
     ['number', 'bigint', 'boolean', 'string'].includes(typeof val) ||
