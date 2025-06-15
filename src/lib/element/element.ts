@@ -16,6 +16,7 @@ import {
   removeChildNode,
 } from './dom'
 import { isChildExpressionOrObservable, isObservable } from './utils'
+import {c} from "vite/dist/node/moduleRunnerTransport.d-DJ_mE5sf";
 
 export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   tag: TagName,
@@ -38,18 +39,43 @@ export function createElement<TagName extends keyof HTMLElementTagNameMap>(
   }
 
   if (children) {
-    children.flat(1).forEach((childExpr, idx) => {
-      // handle reactive values
-      if (isObservable(childExpr)) {
-        handleReactiveChild(ref, childExpr, idx)
-      } else if (!isNil(childExpr)) {
-        // handle static values
-        appendOrReplaceChild(ref, idx, childExpr)
-      } // ignore null or undefined values
-    })
+    handleChildren(ref, children)
   }
 
   return ref
+}
+
+function handleChildren(ref: HTMLElement, children: Child[], offsetIdx = 0) {
+  let fragmentChildrenCount = 0
+  children.flat(1).forEach((child, idx) => {
+    const idxWithOffset = idx + offsetIdx + fragmentChildrenCount
+    // handle reactive values
+    if (isObservable(child)) {
+      handleReactiveChild(ref, child, idxWithOffset)
+    } else if (child instanceof FragmentElement) {
+      fragmentChildrenCount += child.build(ref, idxWithOffset)
+    } else if (!isNil(child)) {
+      // handle static values
+      appendOrReplaceChild(ref, idxWithOffset, child)
+    } // ignore null or undefined values
+  })
+}
+
+export class FragmentElement {
+  readonly #children: Child[]
+
+  constructor(children: Child[]) {
+    this.#children = children
+  }
+
+  build(parentRef: HTMLElement, startIdx: number): number {
+    handleChildren(parentRef, this.#children, startIdx)
+    return this.#children.flat(1).length
+  }
+}
+
+export function f(...children: Child[]) {
+  return new FragmentElement(children)
 }
 
 export function $(
@@ -83,17 +109,18 @@ function handleAttributes(
   })
 }
 
-function handleReactiveChild(ref: HTMLElement, child: ReactiveChild, idx: number) {
+// TODO: this needs a reference to the registerFn!
+function handleReactiveChild(ref: HTMLElement, child$: ReactiveChild, idx: number) {
   // if it's an array, save the previous length so we know how many elements to potentially prune
   let lastChildCount = 0
 
-  child.subscribe((source) => {
-    if (Array.isArray(source)) {
-      lastChildCount = handleReactiveArray(ref, idx, source, lastChildCount)
-    } else if (source instanceof Map) {
-      handleMap(ref, idx, source)
-    } else if (!isNil(source)) {
-      appendOrReplaceChild(ref, idx, source)
+  child$.subscribe((child) => {
+    if (Array.isArray(child)) {
+      lastChildCount = handleReactiveArray(ref, idx, child, lastChildCount)
+    } else if (child instanceof Map) {
+      handleMap(ref, idx, child)
+    } else if (!isNil(child)) {
+      appendOrReplaceChild(ref, idx, child)
     } else {
       // Can't just ignore nil expressions here, since they could become nil at a later point,
       // we will need to remove any that do end up becoming nil.

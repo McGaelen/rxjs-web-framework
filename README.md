@@ -16,11 +16,11 @@ By minimizing the amount of constructs you have to learn, it makes it easier to 
 - [x] conditional rendering
 - [x] derived state
 - [x] for loops
-- [ ] keyed for loops
+- [x] keyed for loops
   - [x] make it actually fucking work
   - [x] clean up the code
   - [x] allow providing a property string to use as the key instead of returning the key in an object. use lodash's get()
-  - [ ] figure out what to do about the array index - if the values returned for each loop iteration use the index, it doesn't change when the array changes (it's not reactive, so it will be out of date if the element moves positions)
+- [ ] figure out what to do about the array index for each$ and map$ - if the values returned for each loop iteration use the index, it doesn't change when the array changes (it's not reactive, so it will be out of date if the element moves positions)
 - [ ] nested derives/for loops (which would cause infinitely higher-order observables...)
 - [ ] component children (maybe with slots too?) should probably look the same as normal elements
   - this probably already works the same as element functions but hasn't been tested
