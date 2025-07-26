@@ -1,5 +1,4 @@
 import type { Observable } from 'rxjs'
-import {FragmentElement} from "./element";
 
 /**
  * All the primitives that are valid to add to DOM elements as attributes or children.
@@ -16,7 +15,7 @@ export type AttributeValue =
 export type AttributeRecord = Record<string, AttributeValue>
 
 export type ChildKey = number | bigint | string
-export type ChildValue = Primitive | HTMLElement | FragmentElement
+export type ChildValue = Primitive | HTMLElement
 export type StaticChild =
   | ChildValue
   // An array containing a mix of static and reactive values (usually from using $``),

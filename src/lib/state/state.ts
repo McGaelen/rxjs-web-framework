@@ -1,9 +1,9 @@
 import {
   BehaviorSubject,
-  combineLatest, combineLatestAll,
-  map, mergeAll,
+  combineLatest,
+  map,
   Observable,
-  OperatorFunction, pipe, Subscription, tap,
+  OperatorFunction,
 } from 'rxjs'
 import { EachFn, KeyedEachFn } from './types'
 import { get } from 'lodash-es'
@@ -23,8 +23,8 @@ export class State<T> extends BehaviorSubject<T> {
     }
   }
 
-  derive$<D>(deriveFn: (currentVal: T) => D): Observable<D> {
-    return this.pipe(map(deriveFn), /*tap(val => console.log(val)),*/)
+  derive$<NewType>(deriveFn: (currentVal: T) => NewType): Observable<NewType> {
+    return this.pipe(map(deriveFn))
   }
 }
 
@@ -33,13 +33,11 @@ export function state$<T>(initialVal: T): State<T> {
 }
 
 // TODO: could improve with more generics for each value in Deps
-export function derive$<D>(
-  deriveFn: (...vals: any[]) => D,
+export function derive$<NewType>(
+  deriveFn: (...vals: any[]) => NewType,
   deps: Observable<any>[],
-): Observable<D> {
-  return combineLatest(deps).pipe(
-    map((vals) => deriveFn(...vals))
-  )
+): Observable<NewType> {
+  return combineLatest(deps).pipe(map((vals) => deriveFn(...vals)))
 }
 
 export function each$<T, N>(
@@ -71,52 +69,4 @@ export function map$<T, K, V>(
     }).pipe(mapPipe)
   }
   throw new Error('Invalid arguments to map$.')
-}
-
-export function flattenArrayOfObservables<T>():
-    OperatorFunction<Array<Observable<T>>, Array<T>> {
-  // Takes an Observable which emits an array where each element in the array is an Observable.
-  // Subscribe to each observable in the array. When any element Observable emits,
-  // emit an array containing all the latest values from each element Observable.
-  // Like combineLatestAll(), but doesn't wait until the outer observable completes.
-  // Each element observable must emit a value before this function will emit.
-  return (observable) => new Observable((subscriber) => {
-    // this function will be called each time this Observable is subscribed to.
-
-
-    const subscriptions: Subscription[] = []
-    let hasCompleted = false
-    const items: T[] = []
-
-    const subscription = observable.subscribe({
-      next(array) {
-        // If the source has completed, we can complete the resulting observable.
-        if (hasCompleted) {
-          subscriber.complete()
-        }
-
-      array.forEach((inner$, idx) =>
-          subscriptions.push(
-              inner$.subscribe(inner =>
-                  items.splice(idx, 1, inner)
-          )
-      ))
-
-      },
-      error(err) {
-        // We need to make sure we're propagating our errors through.
-        subscriber.error(err)
-      },
-      complete() {
-        hasCompleted = true;
-      },
-    })
-    subscriptions.push(subscription)
-
-    // Return the finalization logic. This will be invoked when
-    // the result errors, completes, or is unsubscribed.
-    return () => {
-      subscriptions.forEach(sub => sub.unsubscribe())
-    }
-  })
 }

@@ -1,5 +1,4 @@
-import {$, button, div, each$, f, flattenArrayOfObservables, h1, input, li, map$, span, state$, ul} from './lib'
-import {combineLatest, combineLatestAll, mergeAll, Observable, OperatorFunction, pipe, switchAll} from "rxjs";
+import { $, button, div, h1, input, li, map$, span, state$, ul } from './lib'
 
 export function TodoList() {
   const description$ = state$('')
@@ -51,15 +50,7 @@ export function TodoList() {
     })
   }
 
-  each$(todos$, (todo) =>
-    f(todo.done.derive$(isDone => {
-      if (isDone) {
-        return div('done!')
-      } else {
-        return div('not done.')
-      }
-    }))
-  ).subscribe(console.log)
+  todos$.subscribe(console.log)
 
   return div(
     h1('Todo list'),
@@ -68,32 +59,21 @@ export function TodoList() {
     button({ onclick: addTodoToTop }, 'Add todo to Top'),
     ul(
       { style: 'width: 400px;' },
-      each$(todos$, (todo) =>
-        f(
-          todo.done.derive$(isDone => {
-            if (isDone) {
-              return div('done!')
-            } else {
-              return div('not done.')
-            }
-         })
-        )
-      )
-      // map$(todos$, 'id', (todo) =>
-      //   li(
-      //     { style: 'display: flex; justify-content: space-between; gap: 5px;' },
-      //     span(
-      //       { style: 'display: flex; gap: 5px;' },
-      //       button(
-      //         { onclick: () => todo.done.set$((isDone) => !isDone) },
-      //         'toggle done',
-      //       ),
-      //       todo.done.derive$((isDone) => span(isDone ? 'done!' : 'not done')),
-      //     ),
-      //     todo.description,
-      //     button({ onclick: () => removeTodo(todo.id) }, 'remove'),
-      //   ),
-      // ),
+      map$(todos$, 'id', (todo) =>
+        li(
+          { style: 'display: flex; justify-content: space-between; gap: 5px;' },
+          span(
+            { style: 'display: flex; gap: 5px;' },
+            button(
+              { onclick: () => todo.done.set$((isDone) => !isDone) },
+              'toggle done',
+            ),
+            todo.done.derive$((isDone) => span(isDone ? 'done!' : 'not done')),
+          ),
+          todo.description,
+          button({ onclick: () => removeTodo(todo.id) }, 'remove'),
+        ),
+      ),
       // TODO: fix having multiple other children along with an array not working
       // staticArray.map(fruit => div(fruit)),
       // ['hello world ', description$],
