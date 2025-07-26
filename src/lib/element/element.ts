@@ -126,8 +126,8 @@ function handleMap(ref: HTMLElement, idx: number, source: Map<ChildKey, ChildVal
 
   const max = Math.max(ref.childNodes.length, source.size)
 
-  range(max).forEach((loopIdx) => {
-    console.log('looping', max)
+  range(max).forEach(loopIdx => {
+//    console.log('looping', max)
     const parentOffset = idx + loopIdx
 
     const exprEntry = exprEntries.at(parentOffset)
@@ -152,32 +152,32 @@ function handleMap(ref: HTMLElement, idx: number, source: Map<ChildKey, ChildVal
      *    - noop
      */
 
-        const info = {
-          loopIdx,
-          sourceKey,
-          sourceValue,
-          node,
-          nodeKey: node?._key,
-        }
+//        const info = {
+//          loopIdx,
+//          sourceKey,
+//          sourceValue,
+//          node,
+//          nodeKey: node?._key,
+//        }
 
     const sourceExists = !isNil(sourceKey) && !isNil(sourceValue)
-    if (sourceExists && node && sourceKey === node._key) {
+    /*if (sourceExists && node && sourceKey === node._key) {
       console.log('correct keys - noop', info)
-    } else  if (sourceExists && !node) {
+    } else */ if (sourceExists && !node) {
       const newNode = appendOrReplaceChild(
           ref,
           parentOffset,
           sourceValue,
       ) as ChildNodeWithKey
       newNode._key = sourceKey
-      console.log('missing node - creating', info)
+//      console.log('missing node - creating', info)
     } else if (sourceExists && node && sourceKey !== node._key) {
       if (!source.has(node._key)) {
         removeChildNode(ref, node)
-        console.log(
-          'key mismatch, and node here is not in the source - deleting',
-          info,
-        )
+//        console.log(
+//          'key mismatch, and node here is not in the source - deleting',
+//          info,
+//        )
       }
 
       // Check if there's already a ChildNode for this key.
@@ -188,18 +188,18 @@ function handleMap(ref: HTMLElement, idx: number, source: Map<ChildKey, ChildVal
           )
       if (existingNode) {
         ref.insertBefore(existingNode, ref.childNodes[parentOffset])
-        console.log(
-          'existing node for this key is in dom - moving to this index',
-          info,
-        )
+//        console.log(
+//          'existing node for this key is in dom - moving to this index',
+//          info,
+//        )
       } else {
         const newNode = createNode(sourceValue) as ChildNodeWithKey
         newNode._key = sourceKey
         ref.insertBefore(newNode, ref.childNodes[parentOffset])
-        console.log(
-          'no existing node found for this key - creating new node',
-          info,
-        )
+//        console.log(
+//          'no existing node found for this key - creating new node',
+//          info,
+//        )
       }
     } else if (
         !sourceKey &&
@@ -208,15 +208,15 @@ function handleMap(ref: HTMLElement, idx: number, source: Map<ChildKey, ChildVal
         !source.has(node._key)
     ) {
       removeChildNode(ref, node)
-      console.log(
-        'node exists here but is not in source - deleting',
-        info,
-      )
-    } else {
+//      console.log(
+//        'node exists here but is not in source - deleting',
+//        info,
+//      )
+    }/* else {
       console.log(
         'missed scenario, or list was shortened in place',
         info,
       )
-    }
+    }*/
   })
 }
