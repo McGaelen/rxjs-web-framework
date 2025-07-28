@@ -32,19 +32,17 @@ export function App() {
     div(
       h1('Toggle Visibility'),
       button({ onclick: toggleVisibility }, 'show/hide'),
-      derive$(
-        (isVisible, count) => {
-          if (!isVisible) {
+      derive$([isVisible$, count$], () => {
+          if (!isVisible$.value) {
             return null
-          } else if (count > 10) {
+          } else if (count$.value > 10) {
             return 'count is greater than 10'
-          } else if (count > 0) {
+          } else if (count$.value > 0) {
             return 'count is less than 10'
           } else {
             return 'count is 0'
           }
         },
-        [isVisible$, count$],
       ),
     ),
 

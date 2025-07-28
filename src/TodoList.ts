@@ -1,12 +1,20 @@
-import { $, button, div, h1, input, li, map$, span, state$, ul } from './lib'
+import {$, button, derive$, div, h1, input, li, map$, span, State, state$, ul} from './lib'
+import {TodoItem} from "./TodoItem";
+
+export interface TodoItem {
+   id: number
+   description: string
+   done: State<boolean>
+}
 
 export function TodoList() {
   const description$ = state$('')
-  const todos$ = state$([
+  const todos$: State<TodoItem[]> = state$([
     { id: 0, description: 'buy milk', done: state$(false) },
     { id: 1, description: 'buy eggs', done: state$(true) },
     { id: 2, description: 'buy bread', done: state$(false) },
   ])
+  const showTodos$ = state$(false)
 
   const staticArray = ['apple', 'banana', 'cherry']
 
@@ -57,23 +65,20 @@ export function TodoList() {
     input({ value: description$, onkeyup: setDescription }),
     button({ onclick: addTodo }, 'Add todo'),
     button({ onclick: addTodoToTop }, 'Add todo to Top'),
+    div(
+      button({onclick: () => showTodos$.set$(!showTodos$.value)}, 'show/hide todos')
+    ),
     ul(
       { style: 'width: 400px;' },
-      map$(todos$, 'id', (todo) =>
-        li(
-          { style: 'display: flex; justify-content: space-between; gap: 5px;' },
-          span(
-            { style: 'display: flex; gap: 5px;' },
-            button(
-              { onclick: () => todo.done.set$((isDone) => !isDone) },
-              'toggle done',
-            ),
-            todo.done.derive$((isDone) => span(isDone ? 'done!' : 'not done')),
-          ),
-          todo.description,
-          button({ onclick: () => removeTodo(todo.id) }, 'remove'),
-        ),
-      ),
+      derive$([showTodos$], () => {
+        if (showTodos$.value) {
+          return map$(todos$, 'id', (todo) => TodoItem({todo, onRemoveTodo: removeTodo}))
+        } else {
+          // TODO: this is temporary because createElement currently doesn't take an Observable<void>
+          return div('hi')
+        }
+      })
+
       // TODO: fix having multiple other children along with an array not working
       // staticArray.map(fruit => div(fruit)),
       // ['hello world ', description$],

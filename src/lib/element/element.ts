@@ -88,6 +88,13 @@ function handleReactiveChild(ref: HTMLElement, child: ReactiveChild, idx: number
   let lastChildCount = 0
 
   child.subscribe((source) => {
+    if (isObservable(source)) {
+      console.log('nested observable!')
+      // TODO: need to manage the index here somehow, since a nested obs could return another array, shifting the index
+      // TODO: maybe handleReactiveChild should return the number of elements added
+      handleReactiveChild(ref, source, idx)
+    }
+
     if (Array.isArray(source)) {
       lastChildCount = handleReactiveArray(ref, idx, source, lastChildCount)
     } else if (source instanceof Map) {
