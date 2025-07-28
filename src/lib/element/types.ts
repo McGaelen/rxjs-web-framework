@@ -28,6 +28,8 @@ export type ReactiveChild = Observable<
   | Array<ChildValue>
   // A reactive Map where changes only effect the keyed element
   | Map<ChildKey, ChildValue>
+  // A nested ReactiveChild so that you can nest derived$/map$/each$ calls
+  | ReactiveChild
 >
 export type Child = StaticChild | ReactiveChild
 
