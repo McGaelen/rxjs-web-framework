@@ -24,38 +24,37 @@ export function App() {
 
     div(
       { onclick: increment },
-      h1('Counter'),
+//      h1('Counter'),
       $`counter value: ${count$}`,
       button({ onclick: increment }, count$),
     ),
 
-    div(
-      h1('Toggle Visibility'),
-      button({ onclick: toggleVisibility }, 'show/hide'),
-      derive$([isVisible$, count$], () => {
-          if (!isVisible$.value) {
-            return null
-          } else if (count$.value > 10) {
-            return 'count is greater than 10'
-          } else if (count$.value > 0) {
-            return 'count is less than 10'
-          } else {
-            return 'count is 0'
-          }
-        },
-      ),
-    ),
-
-    div(
-      h1('Subcomponent with reactive props'),
-      div('the button is in the MyButton component'),
-      input({
-        onkeyup: setButtonText,
-        value: buttonText$,
-      }),
-      MyButton({ buttonText$ }),
-    ),
-
-    TodoList(),
+//    div(
+//      h1('Toggle Visibility'),
+//      button({ onclick: toggleVisibility }, 'show/hide'),
+//      derive$([isVisible$, count$], () => {
+//        if (!isVisible$.value) {
+//          return null
+//        } else if (count$.value > 10) {
+//          return 'count is greater than 10'
+//        } else if (count$.value > 0) {
+//          return 'count is less than 10'
+//        } else {
+//          return 'count is 0'
+//        }
+//      }),
+//    ),
+//
+//    div(
+//      h1('Subcomponent with reactive props'),
+//      div('the button is in the MyButton component'),
+//      input({
+//        onkeyup: setButtonText,
+//        value: buttonText$,
+//      }),
+//      MyButton({ buttonText$ }),
+//    ),
+//
+//    TodoList(),
   )
 }

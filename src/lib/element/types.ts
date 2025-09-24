@@ -8,11 +8,16 @@ import type { Observable } from 'rxjs'
  */
 export type Primitive = number | bigint | boolean | string | null | undefined
 
-export type AttributeBaseExpression = Primitive | ((...args: any) => unknown)
-export type AttributeValue =
-  | AttributeBaseExpression
-  | Observable<AttributeBaseExpression>
-export type AttributeRecord = Record<string, AttributeValue>
+export type AttributeValue = Primitive | ((...args: any) => unknown)
+export type StaticAttribute =
+  | AttributeValue
+  // An array containing a mix of static and reactive values (usually from using $``),
+  // where the array itself is static (added/removed elements will not be reactive).
+  | Array<AttributeValue | Observable<AttributeValue>>
+export type ReactiveAttribute = Observable<AttributeValue>
+export type Attribute = StaticAttribute | ReactiveAttribute
+
+export type AttributeRecord = Record<string, Attribute>
 
 export type ChildKey = number | bigint | string
 export type ChildValue = Primitive | HTMLElement

@@ -1,9 +1,12 @@
-import {button, li, span} from "./lib";
-import type {TodoItem} from "./TodoList";
+import { button, li, span } from './lib'
+import type { TodoItem } from './TodoList'
 
-interface TodoItemProps {todo: TodoItem, onRemoveTodo: (id: number) => void}
+interface TodoItemProps {
+  todo: TodoItem
+  onRemoveTodo: (id: number) => void
+}
 
-export function TodoItem({todo, onRemoveTodo}: TodoItemProps) {
+export function TodoItem({ todo, onRemoveTodo }: TodoItemProps) {
   return li(
     { style: 'display: flex; justify-content: space-between; gap: 5px;' },
     span(

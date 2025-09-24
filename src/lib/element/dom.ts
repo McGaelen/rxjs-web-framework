@@ -1,11 +1,11 @@
-import { AttributeBaseExpression, ChildValue } from './types'
+import { AttributeValue, ChildValue } from './types'
 
 type _NonNullableChildBaseExpression = Exclude<ChildValue, null | undefined>
 
 export function addOrReplaceAttribute(
   ref: HTMLElement,
   key: string,
-  value: AttributeBaseExpression,
+  value: AttributeValue,
 ) {
   if (typeof value === 'function') {
     // if its a function, try to add it as an event listener
