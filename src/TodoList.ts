@@ -32,7 +32,7 @@ export function TodoList() {
   const staticArray = ['apple', 'banana', 'cherry']
 
   function setDescription(e: KeyboardEvent) {
-    description$.set$((e.target as HTMLInputElement).value)
+    description$.set((e.target as HTMLInputElement).value)
   }
 
   let serial = 3
@@ -43,7 +43,7 @@ export function TodoList() {
   }
 
   function addTodo() {
-    todos$.set$((todos) => [
+    todos$.set((todos) => [
       ...todos,
       {
         id: getNewId(),
@@ -54,7 +54,7 @@ export function TodoList() {
   }
 
   function addTodoToTop() {
-    todos$.set$((todos) => [
+    todos$.set((todos) => [
       {
         id: getNewId(),
         description: description$.value,
@@ -65,7 +65,7 @@ export function TodoList() {
   }
 
   function removeTodo(id: number) {
-    todos$.set$((todos) => {
+    todos$.set((todos) => {
       const index = todos.findIndex((todo) => todo.id === id)
       return [...todos.slice(undefined, index), ...todos.slice(index + 1)]
     })
@@ -80,7 +80,7 @@ export function TodoList() {
     button({ onclick: addTodoToTop }, 'Add todo to Top'),
     div(
       button(
-        { onclick: () => showTodos$.set$(!showTodos$.value) },
+        { onclick: () => showTodos$.set(!showTodos$.value) },
         'show/hide todos',
       ),
     ),

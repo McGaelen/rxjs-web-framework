@@ -1,4 +1,4 @@
-import { button, li, span } from './lib'
+import { button, derive$, li, span } from './lib'
 import type { TodoItem } from './TodoList'
 
 interface TodoItemProps {
@@ -12,10 +12,10 @@ export function TodoItem({ todo, onRemoveTodo }: TodoItemProps) {
     span(
       { style: 'display: flex; gap: 5px;' },
       button(
-        { onclick: () => todo.done.set$((isDone) => !isDone) },
+        { onclick: () => todo.done.set((isDone) => !isDone) },
         'toggle done',
       ),
-      todo.done.derive$((isDone) => span(isDone ? 'done!' : 'not done')),
+      derive$([todo.done], (isDone) => span(isDone ? 'done!' : 'not done')),
     ),
     todo.description,
     button({ onclick: () => onRemoveTodo(todo.id) }, 'remove'),
