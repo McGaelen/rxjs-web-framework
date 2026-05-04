@@ -1,11 +1,4 @@
-import { combineLatest, map, Observable } from 'rxjs'
-import {
-  $,
-  Attributes,
-  Children,
-  createElement,
-  MaybeObservable,
-} from './index'
+import { createElement } from './index'
 
 export function div(
   attributes?: Attributes | Children,
@@ -58,27 +51,6 @@ export function style(
   children?: Children,
 ): HTMLStyleElement {
   return createElement('style', attributes, children)
-}
-
-export function css(
-  strings: TemplateStringsArray,
-  ...expressions: Observable<string>[]
-): HTMLElement {
-  if (!expressions.length) return style([strings[0]])
-
-  const styleText$ = combineLatest(expressions).pipe(
-    map((exprs) => {
-      let text = ''
-      strings.forEach((str, idx) => {
-        text += str
-        if (exprs[idx]) {
-          text += exprs[idx]
-        }
-      })
-      return text
-    }),
-  )
-  return $([styleText$], ([styleText]) => style([styleText]))
 }
 
 export function template(

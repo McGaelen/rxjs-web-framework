@@ -8,5 +8,5 @@ export function MyButton({
   function onclick() {
     alert(buttonText$.value)
   }
-  return button({ onclick }, buttonText$)
+  return button({ onclick }, [buttonText$])
 }

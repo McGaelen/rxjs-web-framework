@@ -44,7 +44,7 @@ export function each$<T, N>(
   array$: State<Array<T>>,
   eachFn: EachFn<T, N>,
 ): Observable<Array<N>> {
-  return array$.derive$((array) => array.map(eachFn))
+  return array$.derive((array) => array.map(eachFn))
 }
 
 export function map$<T, K, V>(

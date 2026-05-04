@@ -1,4 +1,4 @@
+export * from './dom'
 export * from './element'
+export * from './tags'
 export * from './state'
-export * from './registry/registry'
-export * from './tagged-template/html'
